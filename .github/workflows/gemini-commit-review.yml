@@ -1,0 +1,192 @@
+name: Gemini PR Review
+
+# develop 브랜치로 향하는 PR을 대상으로, PR 전체 변경사항을 리뷰한다.
+# - PR을 열거나 새 커밋을 push할 때마다 리뷰가 갱신된다.
+# - 리뷰는 PR에 코멘트 1개로 달리고, 이후 push 시 같은 코멘트를 덮어쓴다.
+on:
+  pull_request:
+    branches:
+      - develop
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'Assets/02.Scripts/**/*.cs'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# 같은 PR에 새 push가 오면 이전 리뷰는 취소하고 최신 커밋만 리뷰한다.
+concurrency:
+  group: gemini-pr-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Review C# changes
+    # Draft PR과 포크 PR(시크릿 접근 불가)은 건너뛴다.
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Create PR diff
+        id: diff
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # base...head: develop에서 갈라진 지점부터 PR의 모든 커밋 변경사항
+          git diff \
+            --no-ext-diff \
+            --unified=80 \
+            "${BASE_SHA}...${HEAD_SHA}" \
+            -- ':(glob)Assets/02.Scripts/**/*.cs' > commit.diff
+
+          if [[ ! -s commit.diff ]]; then
+            echo "리뷰할 C# 변경사항이 없습니다."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
+
+          # 변경 규모가 너무 크면 리뷰 품질이 떨어지므로 요약에 경고를 남긴다.
+          LINES=$(wc -l < commit.diff)
+          echo "diff_lines=${LINES}" >> "$GITHUB_OUTPUT"
+          if (( LINES > 3000 )); then
+            echo "large_diff=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run Gemini review
+        id: gemini_review
+        if: steps.diff.outputs.has_changes == 'true'
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        env:
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+          # GITHUB_TOKEN은 일부러 넘기지 않는다. 리뷰에는 필요 없고,
+          # 코멘트 작성은 마지막 단계에서 따로 처리한다.
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: gemini-3.1-flash-lite
+          prompt: |
+            이 저장소는 5명이 디자인 패턴을 하나씩 맡아 구현하고,
+            이를 병합해 하나의 Unity 3D 탑다운 액션 게임을 만드는 학습 프로젝트입니다.
+            결과물의 목적은 "디자인 패턴을 제대로 적용하는 것"입니다.
+
+            지금 리뷰할 대상은 develop 브랜치로 향하는 Pull Request입니다.
+            반드시 먼저 commit.diff 파일을 읽고,
+            Assets/02.Scripts 폴더의 C# 변경사항만 검토하세요.
+
+            저장소 루트의 GEMINI.md에 있는 리뷰 기준을 반드시 적용하세요.
+
+            규칙:
+            - 변경된 코드와 직접 관련된 문제만 지적하세요.
+            - 근거가 약한 추측, 취향 차이, 과도한 리팩터링 제안은 하지 마세요.
+            - 디자인 패턴 적용을 위해 의도적으로 나눈 인터페이스와 클래스를
+              "불필요하게 복잡하다"고 지적하지 마세요.
+            - 파일을 수정하거나 커밋하지 말고, 리뷰 결과만 한국어로 작성하세요.
+            - 지적마다 파일명과 관련 코드 위치를 함께 적으세요.
+
+            아래 형식으로 작성하세요. 해당 항목이 없으면 "없음"이라고 쓰세요.
+
+            ### 요약
+            이 PR이 무엇을 변경했는지 2~3줄.
+
+            ### 🔴 반드시 수정
+            버그, 예외 가능성, 메모리 누수 등 병합 전에 고쳐야 하는 문제.
+
+            ### 🟡 개선 권장
+            성능, Unity 생명주기, 가독성 등 고치면 좋은 문제.
+
+            ### 🧩 디자인 패턴 관점
+            적용한 패턴이 의도대로 구현되었는지, 다른 모듈과 인터페이스로만
+            연결되어 있는지에 대한 평가.
+
+            ### 👍 좋은 점
+            잘한 부분 1~2개.
+
+      - name: Add review to Actions summary
+        if: always() && steps.diff.outputs.has_changes == 'true'
+        shell: bash
+        env:
+          REVIEW_BODY: ${{ steps.gemini_review.outputs.summary }}
+          REVIEW_ERROR: ${{ steps.gemini_review.outputs.error }}
+          LARGE_DIFF: ${{ steps.diff.outputs.large_diff }}
+          DIFF_LINES: ${{ steps.diff.outputs.diff_lines }}
+        run: |
+          {
+            echo "## Gemini PR Review"
+            echo
+
+            if [[ "${LARGE_DIFF}" == "true" ]]; then
+              echo "> ⚠️ 변경량이 큽니다 (${DIFF_LINES}줄). PR을 더 작게 나누면 리뷰 정확도가 올라갑니다."
+              echo
+            fi
+
+            if [[ -n "${REVIEW_BODY}" ]]; then
+              printf '%s\n' "${REVIEW_BODY}"
+            else
+              echo "Gemini 리뷰 결과가 생성되지 않았습니다."
+            fi
+
+            if [[ -n "${REVIEW_ERROR}" ]]; then
+              echo
+              echo "### Error"
+              printf '%s\n' "${REVIEW_ERROR}"
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Post or update review comment on PR
+        if: steps.gemini_review.outputs.summary != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVIEW_BODY: ${{ steps.gemini_review.outputs.summary }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          LARGE_DIFF: ${{ steps.diff.outputs.large_diff }}
+          DIFF_LINES: ${{ steps.diff.outputs.diff_lines }}
+        run: |
+          MARKER="<!-- gemini-pr-review -->"
+
+          {
+            echo "${MARKER}"
+            echo "## 🤖 Gemini Code Review"
+            echo
+            echo "> 기준 커밋: \`${HEAD_SHA:0:7}\` · 새 커밋을 push하면 이 코멘트가 갱신됩니다."
+            echo "> AI 리뷰는 참고용입니다. 병합 전 팀원 리뷰 1명 이상은 그대로 필요합니다."
+            if [[ "${LARGE_DIFF}" == "true" ]]; then
+              echo ">"
+              echo "> ⚠️ 변경량이 큽니다 (${DIFF_LINES}줄). PR을 더 작게 나누면 리뷰 정확도가 올라갑니다."
+            fi
+            echo
+            printf '%s\n' "${REVIEW_BODY}"
+          } > body.md
+
+          jq -n --rawfile body body.md '{body: $body}' > comment.json
+
+          # 이전에 단 리뷰 코멘트가 있으면 덮어쓰고, 없으면 새로 단다.
+          COMMENT_ID=$(gh api --paginate \
+            "/repos/${REPOSITORY}/issues/${PR_NUMBER}/comments" \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\") | select(.body | startswith(\"${MARKER}\")) | .id" \
+            | tail -n 1)
+
+          if [[ -n "${COMMENT_ID}" ]]; then
+            gh api --method PATCH \
+              "/repos/${REPOSITORY}/issues/comments/${COMMENT_ID}" \
+              --input comment.json > /dev/null
+          else
+            gh api --method POST \
+              "/repos/${REPOSITORY}/issues/${PR_NUMBER}/comments" \
+              --input comment.json > /dev/null
+          fi
