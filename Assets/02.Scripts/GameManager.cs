@@ -1,0 +1,230 @@
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+public enum UpgradeType
+{
+    AttackSpeed,
+    Damage,
+    MoveSpeed,
+    Heal
+}
+
+public class GameManager : MonoBehaviour
+{
+    /// <summary>
+    /// GameManager         시작 / 진행 / 게임 오버 상태 구현
+    /// TimeManager         경과 시간 측정
+    /// ExperienceManager   경험치 획득 및 레벨업
+    /// ScoreManager        몬스터 처치 점수 계산
+    /// WaveManager         일정 주기로 몬스터 스폰 요청
+    /// UpgradeManager      증강 선택
+    /// 몬스터 처치, 플레이어 사망 이벤트 연동
+    /// </summary>
+    [Header("Game Settings")]
+    public float CurrentTime = 0f; // 진행 시간
+    public float Level = 0f; // 레벨
+    public float Experience = 0f; // 경험치
+    public float MaxExperience = 100f; // 레벨업 경험치
+    public float Score = 0f; // 점수
+    [Header("게임 시작 플래그")]
+    public bool IsGameStarted = false;
+    [Header("게임 진행 중 플래그")]
+    public bool IsGaming = false;
+
+    [Header("증강 UI")]
+    [SerializeField] public GameObject UpgradePanel;
+    [SerializeField] public Button[] UpgradeButtons;
+    [SerializeField] public TMP_Text[] UpgradeLabels;
+
+    public List<UpgradeType> UpgradeChoices = new();
+
+    private void Start()
+    {
+        GameStart();
+    }
+
+    private void Update()
+    {
+        CurrentTime += Time.deltaTime;
+
+
+        // 게임 일시 정지
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (IsGaming)
+            {
+                GamePause();
+            }
+            else
+            {
+                GameRestart();
+            }
+        }
+
+        // Test용 레벨업
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            LevelUp();
+        }
+
+        // 게임 오버
+        // TODO: 플레이어 사망 연결 - 현재는 Q 누르면 게임 오버
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            GameOver();
+        }
+    }
+
+    // 게임 시작
+    public void GameStart()
+    {
+        Debug.Log("Game Start");
+        IsGameStarted = true;
+        IsGaming = true;
+        CurrentTime = 0f;
+        Level = 0f;
+        Experience = 0f;
+        Score = 0f;
+    }
+
+    // 게임 종료
+    public void GameOver()
+    {
+        GamePause();
+        IsGameStarted = false;
+        IsGaming = false;
+        Debug.Log("Game Over");
+        // TODO: 결과 화면 만들기
+    }
+
+    // 적 처치 시 사용
+    public void ScoreUp(float value)
+    {
+        Score += value;
+    }
+
+    // 적 처치 시 사용
+    public void ExperienceUp(float value)
+    {
+        Experience += value;
+        if (Experience >= MaxExperience)
+        {
+            Experience -= MaxExperience;
+            LevelUp();
+        }
+    }
+
+    public void LevelUp()
+    {
+        Level++;
+        // TODO: 증강 획득
+        OpenUpgradeSelection();
+    }
+
+    public void ScoreDown(float value)
+    {
+        Mathf.Min(0, Score - value);
+    }
+
+    public void GamePause()
+    {
+        Time.timeScale = 0;
+        IsGaming = false;
+    }
+
+    public void GameRestart()
+    {
+        Time.timeScale = 1;
+        IsGaming = true;
+    }
+
+    public void OpenUpgradeSelection()
+    {
+        IsGaming = false;
+        GamePause();
+        var pool = new List<UpgradeType>
+        {
+            UpgradeType.AttackSpeed,
+            UpgradeType.Damage,
+            UpgradeType.MoveSpeed,
+            UpgradeType.Heal
+        };
+
+        UpgradeChoices.Clear();
+
+        for (int i = 0; i < 3; i++)
+        {
+            int index = Random.Range(0, pool.Count);
+
+            UpgradeChoices.Add(pool[index]);
+            pool.RemoveAt(index);
+        }
+
+        for (int i = 0; i < 3; i++)
+        {
+            int choiceIndex = i;
+            UpgradeLabels[i].text = GetUpgradeDescription(UpgradeChoices[i]);
+            UpgradeButtons[i].onClick.RemoveAllListeners();
+            UpgradeButtons[i].onClick.AddListener(() => SelectUpgrade(choiceIndex));
+        }
+
+        UpgradePanel.SetActive(true);
+    }
+
+    public void SelectUpgrade(int choiceIndex)
+    {
+        ApplyUpgrade(UpgradeChoices[choiceIndex]);
+        UpgradePanel.SetActive(false);
+        GameRestart();
+    }
+
+    public void ApplyUpgrade(UpgradeType upgradeType)
+    {
+        switch (upgradeType)
+        {
+            case UpgradeType.AttackSpeed:
+                {
+                    // TODO: 플레이어 공격 속도 증가 메서드 호출
+                    Debug.Log("공격 속도 증가");
+                    break;
+                }
+            case UpgradeType.Damage:
+                {
+                    // TODO: 플레이어 공격력 증가 메서드 호출
+                    Debug.Log("공격력 증가");
+                    break;
+                }
+            case UpgradeType.MoveSpeed:
+                {
+                    // TODO: 플레이어 이동 속도 증가 메서드 호출
+                    Debug.Log("이동 속도 증가");
+                    break;
+                }
+            case UpgradeType.Heal:
+                {
+                    // TODO: 플레이어 체력 회복 메서드 호출
+                    Debug.Log("체력 회복");
+                    break;
+                }
+        }
+    }
+
+    public string GetUpgradeDescription(UpgradeType upgradeType)
+    {
+        switch (upgradeType)
+        {
+            case UpgradeType.AttackSpeed:
+                return "속사\n공격 속도 +15%";
+            case UpgradeType.Damage:
+                return "화력 강화\n공격력 + 20%";
+            case UpgradeType.MoveSpeed:
+                return "신속\n이동 속도 +15%";
+            case UpgradeType.Heal:
+                return "치료\n체력 30 회복";
+            default:
+                return "";
+        }
+    }
+}
