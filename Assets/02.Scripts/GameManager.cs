@@ -140,6 +140,7 @@ public class GameManager : MonoBehaviour
         IsGaming = true;
     }
 
+    // 증강 패널 오픈 (랜덤 증강 선정 후 오픈)
     public void OpenUpgradeSelection()
     {
         IsGaming = false;
@@ -173,6 +174,25 @@ public class GameManager : MonoBehaviour
         UpgradePanel.SetActive(true);
     }
 
+    // 증강 Text return
+    public string GetUpgradeDescription(UpgradeType upgradeType)
+    {
+        switch (upgradeType)
+        {
+            case UpgradeType.AttackSpeed:
+                return "속사\n공격 속도 +15%";
+            case UpgradeType.Damage:
+                return "화력 강화\n공격력 + 20%";
+            case UpgradeType.MoveSpeed:
+                return "신속\n이동 속도 +15%";
+            case UpgradeType.Heal:
+                return "치료\n체력 30 회복";
+            default:
+                return "";
+        }
+    }
+
+    // 증강 선택
     public void SelectUpgrade(int choiceIndex)
     {
         ApplyUpgrade(UpgradeChoices[choiceIndex]);
@@ -180,6 +200,7 @@ public class GameManager : MonoBehaviour
         GameRestart();
     }
 
+    // 증강 적용
     public void ApplyUpgrade(UpgradeType upgradeType)
     {
         switch (upgradeType)
@@ -208,23 +229,6 @@ public class GameManager : MonoBehaviour
                     Debug.Log("체력 회복");
                     break;
                 }
-        }
-    }
-
-    public string GetUpgradeDescription(UpgradeType upgradeType)
-    {
-        switch (upgradeType)
-        {
-            case UpgradeType.AttackSpeed:
-                return "속사\n공격 속도 +15%";
-            case UpgradeType.Damage:
-                return "화력 강화\n공격력 + 20%";
-            case UpgradeType.MoveSpeed:
-                return "신속\n이동 속도 +15%";
-            case UpgradeType.Heal:
-                return "치료\n체력 30 회복";
-            default:
-                return "";
         }
     }
 }
