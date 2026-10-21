@@ -225,9 +225,9 @@ GameObject:
   - component: {fileID: 9151338047095015353}
   - component: {fileID: 8296410418996952572}
   - component: {fileID: 2377232939856255786}
-  - component: {fileID: 7318365036609837354}
+  - component: {fileID: -6854659561032084103}
   m_Layer: 0
-  m_Name: Monster
+  m_Name: DashMonster
   m_TagString: Monster
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -329,7 +329,7 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &7318365036609837354
+--- !u!114 &-6854659561032084103
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -338,15 +338,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 1941678436471954333}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b6a02c78c175e14ebbbdaa23e233764, type: 3}
+  m_Script: {fileID: 11500000, guid: 6fa45852dd1edd04bb03a66f7c3cef86, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NormalMonster
+  m_EditorClassIdentifier: Assembly-CSharp::DashMonster
   moveSpeed: 1.5
-  health: 100
+  DashSpeed: 5
+  DashRange: 10
+  DashRecognizeRange: 5
+  health: 50
   AttackDamage: 20
   target: {fileID: 0}
   direction: {x: 0, y: 0, z: 0}
-  healthBar: {fileID: 5737062428184608918}
+  healthBar: {fileID: 0}
 --- !u!1 &2606400239883268742
 GameObject:
   m_ObjectHideFlags: 0
