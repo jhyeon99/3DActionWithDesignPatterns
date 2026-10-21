@@ -150,6 +150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerFire
   FireRate: 0.1
   FireTimer: 0
+  BulletPrefab: {fileID: 0}
 --- !u!4 &1062588051
 Transform:
   m_ObjectHideFlags: 0
@@ -392,6 +393,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4864441676729904431, guid: a21f331b9754441459f96905038bb0c2, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5736808019686559325, guid: a21f331b9754441459f96905038bb0c2, type: 3}
       propertyPath: m_Name
       value: Bullet
