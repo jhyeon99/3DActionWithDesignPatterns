@@ -15,6 +15,8 @@ public class NormalMonster : MonoBehaviour
     {
         healthBar = GetComponentInChildren<Slider>();
 
+        target = GameObject.FindGameObjectWithTag("Player").transform;
+
         // 체력바 위치 조정
         healthBar.transform.position = transform.position + Vector3.up * 1.5f;
     }
