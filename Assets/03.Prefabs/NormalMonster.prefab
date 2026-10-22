@@ -224,8 +224,9 @@ GameObject:
   - component: {fileID: 5863083772096479624}
   - component: {fileID: 9151338047095015353}
   - component: {fileID: 8296410418996952572}
-  - component: {fileID: 2377232939856255786}
   - component: {fileID: 7318365036609837354}
+  - component: {fileID: 2377232939856255786}
+  - component: {fileID: 1202168879695815892}
   m_Layer: 0
   m_Name: NormalMonster
   m_TagString: Monster
@@ -306,6 +307,24 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &7318365036609837354
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1941678436471954333}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b6a02c78c175e14ebbbdaa23e233764, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NormalMonster
+  moveSpeed: 1.5
+  health: 100
+  attackDamage: 20
+  target: {fileID: 0}
+  direction: {x: 0, y: 0, z: 0}
+  healthBar: {fileID: 5737062428184608918}
 --- !u!136 &2377232939856255786
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -329,24 +348,33 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &7318365036609837354
-MonoBehaviour:
+--- !u!54 &1202168879695815892
+Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1941678436471954333}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b6a02c78c175e14ebbbdaa23e233764, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NormalMonster
-  moveSpeed: 1.5
-  health: 100
-  AttackDamage: 20
-  target: {fileID: 0}
-  direction: {x: 0, y: 0, z: 0}
-  healthBar: {fileID: 5737062428184608918}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 80
+  m_CollisionDetection: 0
 --- !u!1 &2606400239883268742
 GameObject:
   m_ObjectHideFlags: 0

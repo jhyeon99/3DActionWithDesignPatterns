@@ -6,7 +6,7 @@ public class NormalMonster : MonoBehaviour
 {
     public float moveSpeed = 1.5f;
     public float health = 100f;
-    public float AttackDamage = 20f;
+    public float attackDamage = 20f;
     public Transform target;
     public Vector3 direction;
     public Slider healthBar;
@@ -42,7 +42,13 @@ public class NormalMonster : MonoBehaviour
     {
         if (collision.gameObject.tag == "Player")
         {
-            // TODO : 플레이어 데미지 적용
+            GameObject gameObject = collision.gameObject;
+
+            if (gameObject != null)
+            {
+                Debug.Log(gameObject.name);
+                gameObject.GetComponent<Player>().TakeDamage(attackDamage);
+            }
         }
     }
 

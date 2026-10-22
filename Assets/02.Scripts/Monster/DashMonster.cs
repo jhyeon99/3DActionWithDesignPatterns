@@ -10,7 +10,7 @@ public class DashMonster : MonoBehaviour
     public float DashRange = 10f;
     public float DashRecognizeRange = 5f;
     public float health = 50f;
-    public float AttackDamage = 20f;
+    public float attackDamage = 20f;
     public Transform target;
     public Vector3 direction;
     public Slider healthBar;
@@ -57,7 +57,7 @@ public class DashMonster : MonoBehaviour
         yield return new WaitForSeconds(2f);
 
         // 돌진 거리만큼 이동하면 종료하도록
-        while ((transform.position - endPosition).magnitude > 2f)
+        while ((transform.position - endPosition).magnitude > 0.5f)
         {
             transform.Translate(direction * DashSpeed * Time.deltaTime);
             yield return null;
@@ -70,7 +70,13 @@ public class DashMonster : MonoBehaviour
     {
         if (collision.gameObject.tag == "Player")
         {
-            // TODO : 플레이어 데미지 적용
+            GameObject gameObject = collision.gameObject;
+
+            if (gameObject != null)
+            {
+                Debug.Log(gameObject.name);
+                gameObject.GetComponent<Player>().TakeDamage(attackDamage);
+            }
         }
     }
 
