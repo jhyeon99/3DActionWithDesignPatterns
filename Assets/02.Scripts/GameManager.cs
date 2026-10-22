@@ -44,6 +44,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] public TextMeshProUGUI ScoreText; // 점수
     [SerializeField] public Slider ExperienceSlider; // 경험치 바
 
+    [Header("몬스터 스폰")]
+    [SerializeField] public GameObject[] MonsterPrefabs;
+    [SerializeField] public Transform[] SpawnPoints;
+    [SerializeField] public int SpawnCount = 3;
+
     public List<UpgradeType> UpgradeChoices = new();
 
     public float SpawnInterval = 5f;
@@ -62,7 +67,7 @@ public class GameManager : MonoBehaviour
         CurrentTimeText.text = $"{minutes:00}:{seconds:00}";
 
         // 게임 일시 정지
-        if (IsGameStarted && UpgradePanel.activeSelf)
+        if (IsGameStarted && !UpgradePanel.activeSelf)
         {
             if (Input.GetKeyDown(KeyCode.Escape))
             {
@@ -113,6 +118,7 @@ public class GameManager : MonoBehaviour
         Experience = 0f;
         Score = 0f;
         Time.timeScale = 1;
+        MonsterSpawnTimer = 0;
         UpgradeChoices.Clear();
     }
 
@@ -151,7 +157,7 @@ public class GameManager : MonoBehaviour
 
     public void ScoreDown(float value)
     {
-        Score = Mathf.Min(0, Score - value);
+        Score = Mathf.Max(0, Score - value);
     }
 
     public void GamePause()
@@ -168,6 +174,26 @@ public class GameManager : MonoBehaviour
 
     public void MonsterWaveStart()
     {
+        if (!IsGameStarted || !IsGaming)
+            return;
+
+        MonsterSpawnTimer = 0f;
+
+        if (MonsterPrefabs == null || MonsterPrefabs.Length == 0 || SpawnPoints == null || SpawnPoints.Length == 0)
+            return;
+
+        for (int i = 0; i < SpawnCount; i++)
+        {
+            int monsterIndex = Random.Range(0, MonsterPrefabs.Length);
+            int pointIndex = Random.Range(0, SpawnPoints.Length);
+
+            GameObject prefab = MonsterPrefabs[monsterIndex];
+            Transform point = SpawnPoints[pointIndex];
+
+            if (prefab == null || point == null)
+                continue;
+            Instantiate(prefab, point.position, point.rotation);
+        }
     }
 
     // 증강 패널 오픈 (랜덤 증강 선정 후 오픈)
