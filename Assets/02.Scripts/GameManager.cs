@@ -156,6 +156,9 @@ public class GameManager : MonoBehaviour
             Experience -= MaxExperience;
             LevelUp();
         }
+
+        ExperienceSlider.value = Experience;
+        ExperienceText.text = $"{Experience:0} / {MaxExperience:0}";
     }
 
     public void LevelUp()
