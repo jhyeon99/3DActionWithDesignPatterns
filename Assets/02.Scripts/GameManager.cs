@@ -57,7 +57,9 @@ public class GameManager : MonoBehaviour
     private void Update()
     {
         CurrentTime += Time.deltaTime;
-        CurrentTimeText.text = CurrentTime.ToString("F");
+        int minutes = Mathf.FloorToInt(CurrentTime / 60f);
+        int seconds = Mathf.FloorToInt(CurrentTime) % 60;
+        CurrentTimeText.text = $"{minutes:00}:{seconds:00}";
 
         // 게임 일시 정지
         if (IsGameStarted && UpgradePanel.activeSelf)
