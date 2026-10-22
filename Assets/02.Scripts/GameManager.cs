@@ -110,7 +110,6 @@ public class GameManager : MonoBehaviour
     // 게임 시작
     public void GameStart()
     {
-        Debug.Log("Game Start");
         IsGameStarted = true;
         IsGaming = true;
         CurrentTime = 0f;
@@ -118,8 +117,18 @@ public class GameManager : MonoBehaviour
         Experience = 0f;
         Score = 0f;
         Time.timeScale = 1;
-        MonsterSpawnTimer = 0;
+        MonsterSpawnTimer = SpawnInterval;
         UpgradeChoices.Clear();
+        UpgradePanel.SetActive(false);
+
+        CurrentTimeText.text = "";
+        ExperienceText.text = $"{Experience:0} / {MaxExperience:0}";
+        ScoreText.text = "0";
+
+        ExperienceSlider.minValue = 0f;
+        ExperienceSlider.maxValue = MaxExperience;
+        ExperienceSlider.value = Experience;
+        Debug.Log("Game Start");
     }
 
     // 게임 종료
