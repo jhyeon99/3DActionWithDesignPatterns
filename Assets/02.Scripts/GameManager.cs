@@ -38,7 +38,16 @@ public class GameManager : MonoBehaviour
     [SerializeField] public Button[] UpgradeButtons;
     [SerializeField] public TMP_Text[] UpgradeLabels;
 
+    [Header("게임 UI")]
+    [SerializeField] public TextMeshProUGUI CurrentTimeText; // 경과 시간
+    [SerializeField] public TextMeshProUGUI ExperienceText; // 경험치
+    [SerializeField] public TextMeshProUGUI ScoreText; // 점수
+    [SerializeField] public Slider ExperienceSlider; // 경험치 바
+
     public List<UpgradeType> UpgradeChoices = new();
+
+    public float SpawnInterval = 5f;
+    public float MonsterSpawnTimer = 0f;
 
     private void Start()
     {
@@ -48,20 +57,24 @@ public class GameManager : MonoBehaviour
     private void Update()
     {
         CurrentTime += Time.deltaTime;
-
+        CurrentTimeText.text = CurrentTime.ToString("F");
 
         // 게임 일시 정지
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (IsGameStarted && UpgradePanel.activeSelf)
         {
-            if (IsGaming)
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
-                GamePause();
-            }
-            else
-            {
-                GameRestart();
+                if (IsGaming)
+                {
+                    GamePause();
+                }
+                else
+                {
+                    GameResume();
+                }
             }
         }
+
 
         // Test용 레벨업
         if (Input.GetKeyDown(KeyCode.W))
@@ -75,6 +88,16 @@ public class GameManager : MonoBehaviour
         {
             GameOver();
         }
+
+        // 조건 || 몬스터의 수가 0일 때 추가
+        if (IsGameStarted && IsGaming)
+        {
+            MonsterSpawnTimer += Time.deltaTime;
+            if (MonsterSpawnTimer >= SpawnInterval)
+            {
+                MonsterWaveStart();
+            }
+        }
     }
 
     // 게임 시작
@@ -87,6 +110,8 @@ public class GameManager : MonoBehaviour
         Level = 0f;
         Experience = 0f;
         Score = 0f;
+        Time.timeScale = 1;
+        UpgradeChoices.Clear();
     }
 
     // 게임 종료
@@ -119,13 +144,12 @@ public class GameManager : MonoBehaviour
     public void LevelUp()
     {
         Level++;
-        // TODO: 증강 획득
         OpenUpgradeSelection();
     }
 
     public void ScoreDown(float value)
     {
-        Mathf.Min(0, Score - value);
+        Score = Mathf.Min(0, Score - value);
     }
 
     public void GamePause()
@@ -134,10 +158,14 @@ public class GameManager : MonoBehaviour
         IsGaming = false;
     }
 
-    public void GameRestart()
+    public void GameResume()
     {
         Time.timeScale = 1;
         IsGaming = true;
+    }
+
+    public void MonsterWaveStart()
+    {
     }
 
     // 증강 패널 오픈 (랜덤 증강 선정 후 오픈)
@@ -197,7 +225,7 @@ public class GameManager : MonoBehaviour
     {
         ApplyUpgrade(UpgradeChoices[choiceIndex]);
         UpgradePanel.SetActive(false);
-        GameRestart();
+        GameResume();
     }
 
     // 증강 적용
@@ -206,29 +234,24 @@ public class GameManager : MonoBehaviour
         switch (upgradeType)
         {
             case UpgradeType.AttackSpeed:
-                {
-                    // TODO: 플레이어 공격 속도 증가 메서드 호출
-                    Debug.Log("공격 속도 증가");
-                    break;
-                }
+                // TODO: 플레이어 공격 속도 증가 메서드 호출
+                Debug.Log("공격 속도 증가");
+                break;
+
             case UpgradeType.Damage:
-                {
-                    // TODO: 플레이어 공격력 증가 메서드 호출
-                    Debug.Log("공격력 증가");
-                    break;
-                }
+                // TODO: 플레이어 공격력 증가 메서드 호출
+                Debug.Log("공격력 증가");
+                break;
+
             case UpgradeType.MoveSpeed:
-                {
-                    // TODO: 플레이어 이동 속도 증가 메서드 호출
-                    Debug.Log("이동 속도 증가");
-                    break;
-                }
+                // TODO: 플레이어 이동 속도 증가 메서드 호출
+                Debug.Log("이동 속도 증가");
+                break;
+
             case UpgradeType.Heal:
-                {
-                    // TODO: 플레이어 체력 회복 메서드 호출
-                    Debug.Log("체력 회복");
-                    break;
-                }
+                // TODO: 플레이어 체력 회복 메서드 호출
+                Debug.Log("체력 회복");
+                break;
         }
     }
 }
