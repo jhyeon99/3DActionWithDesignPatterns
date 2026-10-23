@@ -32,8 +32,13 @@ public class NormalMonster : MonoBehaviour
         direction = target.position - transform.position;
 
         Vector3 moveDirection = direction.normalized;
+        moveDirection.y = 0f;
 
-        transform.Translate(moveDirection * moveSpeed * Time.deltaTime);
+        transform.rotation = Quaternion.LookRotation(moveDirection);
+        transform.Translate(
+            Vector3.forward * moveSpeed * Time.deltaTime,
+            Space.Self
+        );
 
         healthBar.value = health;
     }

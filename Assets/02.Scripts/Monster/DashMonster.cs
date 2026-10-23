@@ -37,6 +37,7 @@ public class DashMonster : MonoBehaviour
         direction = target.position - transform.position;
 
         Vector3 moveDirection = direction.normalized;
+        moveDirection.y = 0f;
 
         // 플레이어와의 거리가 돌진 인식 범위보다 작아지면 돌진 수행
         if (direction.magnitude < DashRange && DashCoroutine == null)
@@ -45,7 +46,11 @@ public class DashMonster : MonoBehaviour
             return;
         }
 
-        transform.Translate(moveDirection * moveSpeed * Time.deltaTime);
+        transform.rotation = Quaternion.LookRotation(moveDirection);
+        transform.Translate(
+            Vector3.forward * moveSpeed * Time.deltaTime,
+            Space.Self
+        );
 
         healthBar.value = health;
     }

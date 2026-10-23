@@ -30,15 +30,17 @@ public class DebuffMonster : MonoBehaviour
     // Player의 Transform 방향으로 이동
     public void Update()
     {
-        healthBar.transform.forward = target.transform.position;
-        healthBar.transform.rotation = Quaternion.Euler(90, 0, 0);
+        healthBar.transform.forward = Camera.main.transform.forward;
         
         if (health <= 0)
         {
             return;
         }
-
         
+        healthBar.value = health;
+
+        transform.forward = (target.position - transform.position).normalized;
+
         if (elpased >= castCoolTime)
         {
             elpased = 0f;
@@ -50,13 +52,17 @@ public class DebuffMonster : MonoBehaviour
             elpased += Time.deltaTime;
             
             direction = target.position - transform.position;
-
-            Vector3 moveDirection = direction.normalized;
             
-            // transform.LookAt(target);
-            transform.Translate(moveDirection * moveSpeed * Time.deltaTime);
+            Vector3 moveDirection = direction.normalized;
+            moveDirection.y = 0f;
+            
+            transform.rotation = Quaternion.LookRotation(moveDirection);
+            transform.Translate(
+                Vector3.forward * moveSpeed * Time.deltaTime,
+                Space.Self
+            );
 
-            healthBar.value = health;
+            
         }
     }
 
