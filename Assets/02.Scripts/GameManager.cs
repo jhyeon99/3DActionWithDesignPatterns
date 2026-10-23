@@ -24,7 +24,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     [Header("Game Settings")]
     public float CurrentTime = 0f; // 진행 시간
-    public float Level = 0f; // 레벨
+    public int Level = 1; // 레벨
     public float Experience = 0f; // 경험치
     public float MaxExperience = 100f; // 레벨업 경험치
     public float Score = 0f; // 점수
@@ -45,6 +45,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] public Slider ExperienceSlider; // 경험치 바
     [SerializeField] public GameObject GameOverPanel; // 게임 오버 화면
     [SerializeField] public GameObject PausePanel; // 일시 정지 화면
+    [SerializeField] public TextMeshProUGUI LevelText; // 레벨
 
     [Header("몬스터 스폰")]
     [SerializeField] public GameObject[] MonsterPrefabs;
@@ -138,8 +139,9 @@ public class GameManager : MonoBehaviour
         IsGameStarted = true;
         IsGaming = true;
         CurrentTime = 0f;
-        Level = 0f;
+        Level = 1;
         Experience = 0f;
+        MaxExperience = 100f;
         PendingUpgradeCount = 0;
         Score = 0f;
         Time.timeScale = 1;
@@ -153,6 +155,7 @@ public class GameManager : MonoBehaviour
         CurrentTimeText.text = "";
         ExperienceText.text = $"{Experience:0} / {MaxExperience:0}";
         ScoreText.text = "0";
+        LevelText.text = Level.ToString("0");
 
         // 경험치 초기화
         ExperienceSlider.minValue = 0f;
@@ -215,6 +218,8 @@ public class GameManager : MonoBehaviour
         PendingUpgradeCount++;
         MaxExperience *= 1.1f;
         ExperienceSlider.maxValue = MaxExperience;
+        ExperienceText.text = $"{Experience:0} / {MaxExperience:0}";
+        LevelText.text = Level.ToString("0");
         if (!UpgradePanel.activeSelf && IsGaming)
         {
             OpenUpgradeSelection();
