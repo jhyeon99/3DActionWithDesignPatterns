@@ -44,17 +44,27 @@ public class GameManager : MonoBehaviour
     [SerializeField] public TextMeshProUGUI ScoreText; // 점수
     [SerializeField] public Slider ExperienceSlider; // 경험치 바
     [SerializeField] public GameObject GameOverPanel; // 게임 오버 화면
+    [SerializeField] public GameObject PausePanel; // 일시 정지 화면
 
     [Header("몬스터 스폰")]
     [SerializeField] public GameObject[] MonsterPrefabs;
     [SerializeField] public Transform[] SpawnPoints;
     [SerializeField] public int SpawnCount = 3;
 
+    [Header("스폰 난이도")]
+    public int InitialSpawnCount = 3;
+    public float SpawnIncreaseInterval = 10f;
+
     public List<UpgradeType> UpgradeChoices = new();
 
     public float SpawnInterval = 5f;
     public float MonsterSpawnTimer = 0f;
     public int PendingUpgradeCount = 0;
+
+    private void Awake()
+    {
+        DontDestroyOnLoad(gameObject);
+    }
 
     private void Start()
     {
@@ -139,6 +149,8 @@ public class GameManager : MonoBehaviour
 
         // 게임 종료 패널 숨김
         GameOverPanel.SetActive(false);
+
+        PausePanel.SetActive(false);
     }
 
     // 게임 종료
@@ -150,6 +162,7 @@ public class GameManager : MonoBehaviour
         Debug.Log("Game Over");
         GameOverPanel.SetActive(true);
         UpgradePanel.SetActive(false);
+        PausePanel.SetActive(false);
     }
 
     public void GameExit()
@@ -200,6 +213,7 @@ public class GameManager : MonoBehaviour
 
     public void GamePause()
     {
+        PausePanel.SetActive(true);
         Time.timeScale = 0;
         IsGaming = false;
     }
@@ -208,10 +222,14 @@ public class GameManager : MonoBehaviour
     {
         Time.timeScale = 1;
         IsGaming = true;
+        PausePanel.SetActive(false);
     }
 
     public void MonsterWaveStart()
     {
+        // 주기적으로 스폰하는 몬스터 5마리씩 증가
+        int increaseCount = Mathf.FloorToInt(CurrentTime / Mathf.Max(1f, SpawnIncreaseInterval)) * 5;
+        SpawnCount = InitialSpawnCount + increaseCount;
         if (!IsGameStarted || !IsGaming)
             return;
 
