@@ -201,12 +201,12 @@ public class GameManager : MonoBehaviour
     {
         Level++;
         PendingUpgradeCount++;
-        if (!UpgradePanel.activeSelf)
+        MaxExperience *= 1.1f;
+        ExperienceSlider.maxValue = MaxExperience;
+        if (!UpgradePanel.activeSelf && IsGaming)
         {
             OpenUpgradeSelection();
         }
-
-        MaxExperience *= 1.1f;
     }
 
     public void ScoreDown(float value)
@@ -228,7 +228,7 @@ public class GameManager : MonoBehaviour
 
     public void GameResume()
     {
-        if (!IsGameStarted) return;
+        if (!IsGameStarted || UpgradePanel.activeSelf) return;
         Time.timeScale = 1;
         IsGaming = true;
         PausePanel.SetActive(false);
