@@ -54,6 +54,7 @@ public class GameManager : MonoBehaviour
 
     public float SpawnInterval = 5f;
     public float MonsterSpawnTimer = 0f;
+    public int PendingUpgradeCount = 0;
 
     private void Start()
     {
@@ -116,6 +117,7 @@ public class GameManager : MonoBehaviour
         CurrentTime = 0f;
         Level = 0f;
         Experience = 0f;
+        PendingUpgradeCount = 0;
         Score = 0f;
         Time.timeScale = 1;
         MonsterSpawnTimer = SpawnInterval;
@@ -170,7 +172,7 @@ public class GameManager : MonoBehaviour
     public void ExperienceUp(float value)
     {
         Experience += value;
-        if (Experience >= MaxExperience)
+        while (Experience >= MaxExperience)
         {
             Experience -= MaxExperience;
             LevelUp();
@@ -183,7 +185,11 @@ public class GameManager : MonoBehaviour
     public void LevelUp()
     {
         Level++;
-        OpenUpgradeSelection();
+        PendingUpgradeCount++;
+        if (!UpgradePanel.activeSelf)
+        {
+            OpenUpgradeSelection();
+        }
     }
 
     public void ScoreDown(float value)
@@ -283,11 +289,20 @@ public class GameManager : MonoBehaviour
     // 증강 선택
     public void SelectUpgrade(int choiceIndex)
     {
-        if (!IsGameStarted || !UpgradePanel.activeSelf || choiceIndex < 0 || choiceIndex >= UpgradeChoices.Count)
+        if (!IsGameStarted || !UpgradePanel.activeSelf || choiceIndex < 0 || choiceIndex >= UpgradeChoices.Count ||
+            PendingUpgradeCount <= 0)
             return;
         ApplyUpgrade(UpgradeChoices[choiceIndex]);
-        UpgradePanel.SetActive(false);
-        GameResume();
+        PendingUpgradeCount--;
+        if (PendingUpgradeCount > 0)
+        {
+            OpenUpgradeSelection();
+        }
+        else
+        {
+            UpgradePanel.SetActive(false);
+            GameResume();
+        }
     }
 
     // 증강 적용
