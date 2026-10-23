@@ -146,8 +146,8 @@ public class GameManager : MonoBehaviour
         IsGameStarted = false;
         IsGaming = false;
         Debug.Log("Game Over");
-        // TODO: 결과 화면 만들기
         GameOverPanel.SetActive(true);
+        UpgradePanel.SetActive(false);
     }
 
     public void GameExit()
@@ -163,6 +163,7 @@ public class GameManager : MonoBehaviour
     public void ScoreUp(float value)
     {
         Score += value;
+        ScoreText.text = Score.ToString("0");
     }
 
     // 적 처치 시 사용
@@ -188,6 +189,7 @@ public class GameManager : MonoBehaviour
     public void ScoreDown(float value)
     {
         Score = Mathf.Max(0, Score - value);
+        ScoreText.text = Score.ToString("0");
     }
 
     public void GamePause()
@@ -281,6 +283,8 @@ public class GameManager : MonoBehaviour
     // 증강 선택
     public void SelectUpgrade(int choiceIndex)
     {
+        if (!IsGameStarted || !UpgradePanel.activeSelf || choiceIndex < 0 || choiceIndex >= UpgradeChoices.Count)
+            return;
         ApplyUpgrade(UpgradeChoices[choiceIndex]);
         UpgradePanel.SetActive(false);
         GameResume();
