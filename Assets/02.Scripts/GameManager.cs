@@ -86,6 +86,7 @@ public class GameManager : MonoBehaviour
                 if (IsGaming)
                 {
                     GamePause();
+                    OpenPausePanel();
                 }
                 else
                 {
@@ -185,6 +186,7 @@ public class GameManager : MonoBehaviour
     public void ExperienceUp(float value)
     {
         Experience += value;
+        if (MaxExperience <= 0) return;
         while (Experience >= MaxExperience)
         {
             Experience -= MaxExperience;
@@ -203,6 +205,8 @@ public class GameManager : MonoBehaviour
         {
             OpenUpgradeSelection();
         }
+
+        MaxExperience *= 1.1f;
     }
 
     public void ScoreDown(float value)
@@ -213,13 +217,18 @@ public class GameManager : MonoBehaviour
 
     public void GamePause()
     {
-        PausePanel.SetActive(true);
         Time.timeScale = 0;
         IsGaming = false;
     }
 
+    public void OpenPausePanel()
+    {
+        PausePanel.SetActive(true);
+    }
+
     public void GameResume()
     {
+        if (!IsGameStarted) return;
         Time.timeScale = 1;
         IsGaming = true;
         PausePanel.SetActive(false);
