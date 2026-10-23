@@ -33,6 +33,9 @@ public class DashMonster : MonoBehaviour
         {
             return;
         }
+        
+        healthBar.transform.forward = Camera.main.transform.forward;
+        healthBar.value = health;
 
         direction = target.position - transform.position;
 
@@ -51,8 +54,6 @@ public class DashMonster : MonoBehaviour
             Vector3.forward * moveSpeed * Time.deltaTime,
             Space.Self
         );
-
-        healthBar.value = health;
     }
 
     public IEnumerator Dash(Vector3 direction, float distance)
