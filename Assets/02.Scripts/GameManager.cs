@@ -8,7 +8,9 @@ public enum UpgradeType
     AttackSpeed,
     Damage,
     MoveSpeed,
-    Heal
+    HealthUp,
+    Heal,
+    DefenseUp
 }
 
 public class GameManager : MonoBehaviour
@@ -325,6 +327,10 @@ public class GameManager : MonoBehaviour
                 return "신속\n이동 속도 +15%";
             case UpgradeType.Heal:
                 return "치료\n체력 30 회복";
+            case UpgradeType.HealthUp:
+                return "체력 증가\n최대 체력 10 증가";
+            case UpgradeType.DefenseUp:
+                return "방어력 증가\n방어력 10% 증가";
             default:
                 return "";
         }
@@ -372,6 +378,15 @@ public class GameManager : MonoBehaviour
             case UpgradeType.Heal:
                 // TODO: 플레이어 체력 회복 메서드 호출
                 Debug.Log("체력 회복");
+                break;
+
+            case UpgradeType.HealthUp:
+                // TODO: 플레이어 최대 체력 증가 메섣 호출
+                Debug.Log("최대 체력 증가");
+                break;
+            case UpgradeType.DefenseUp:
+                // TODO: 플레이어 최대 체력 증가 메서드 호출
+                Debug.Log("방어력 증가");
                 break;
         }
     }
