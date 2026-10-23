@@ -95,15 +95,27 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        // Test용 경험치업
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            ExperienceUp(50f);
+        }
+
         // Test용 레벨업
-        if (Input.GetKeyDown(KeyCode.W))
+        if (Input.GetKeyDown(KeyCode.Alpha2))
         {
             LevelUp();
         }
 
+        // Test용 스코어업
+        if (Input.GetKeyDown(KeyCode.Alpha3))
+        {
+            ScoreUp(10f);
+        }
+
         // 게임 오버
         // TODO: 플레이어 사망 연결 - 현재는 Q 누르면 게임 오버
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (Input.GetKeyDown(KeyCode.Alpha4))
         {
             GameOver();
         }
