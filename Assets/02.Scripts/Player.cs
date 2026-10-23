@@ -36,11 +36,7 @@ public class Player : MonoBehaviour
 
         if (Input.GetKeyDown(HealKey))
         {
-            CurrentHp += HealAmount;
-            if (CurrentHp > MaxHp)
-            {
-                CurrentHp = MaxHp;
-            }
+            UpgradeHeal(HealAmount);
         }
 
         // if (HitStunTimer > 0f)
@@ -82,6 +78,41 @@ public class Player : MonoBehaviour
         }
 
         // HitStunTimer = HitStunTime;
+    }
+
+    public void UpgradeMaxHp(float amount)
+    {
+        if (IsDead)
+        {
+            return;
+        }
+
+        MaxHp += amount;
+        CurrentHp += amount;
+    }
+
+    public void UpgradeDefense(float amount)
+    {
+        if (IsDead)
+        {
+            return;
+        }
+
+        DefensePercent += amount;
+    }
+
+    public void UpgradeHeal(float amount)
+    {
+        if (IsDead)
+        {
+            return;
+        }
+
+        CurrentHp += amount;
+        if (CurrentHp > MaxHp)
+        {
+            CurrentHp = MaxHp;
+        }
     }
 
     public void OnGUI()
