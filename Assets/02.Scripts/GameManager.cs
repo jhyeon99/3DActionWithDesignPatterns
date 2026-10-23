@@ -43,6 +43,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] public TextMeshProUGUI ExperienceText; // 경험치
     [SerializeField] public TextMeshProUGUI ScoreText; // 점수
     [SerializeField] public Slider ExperienceSlider; // 경험치 바
+    [SerializeField] public GameObject GameOverPanel; // 게임 오버 화면
 
     [Header("몬스터 스폰")]
     [SerializeField] public GameObject[] MonsterPrefabs;
@@ -82,7 +83,6 @@ public class GameManager : MonoBehaviour
             }
         }
 
-
         // Test용 레벨업
         if (Input.GetKeyDown(KeyCode.W))
         {
@@ -110,6 +110,7 @@ public class GameManager : MonoBehaviour
     // 게임 시작
     public void GameStart()
     {
+        // 게임 정보 초기화
         IsGameStarted = true;
         IsGaming = true;
         CurrentTime = 0f;
@@ -118,17 +119,24 @@ public class GameManager : MonoBehaviour
         Score = 0f;
         Time.timeScale = 1;
         MonsterSpawnTimer = SpawnInterval;
+
+        // 증강 패널 초기화
         UpgradeChoices.Clear();
         UpgradePanel.SetActive(false);
 
+        // 게임 정보 UI 초기화
         CurrentTimeText.text = "";
         ExperienceText.text = $"{Experience:0} / {MaxExperience:0}";
         ScoreText.text = "0";
 
+        // 경험치 초기화
         ExperienceSlider.minValue = 0f;
         ExperienceSlider.maxValue = MaxExperience;
         ExperienceSlider.value = Experience;
         Debug.Log("Game Start");
+
+        // 게임 종료 패널 숨김
+        GameOverPanel.SetActive(false);
     }
 
     // 게임 종료
@@ -139,6 +147,16 @@ public class GameManager : MonoBehaviour
         IsGaming = false;
         Debug.Log("Game Over");
         // TODO: 결과 화면 만들기
+        GameOverPanel.SetActive(true);
+    }
+
+    public void GameExit()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 
     // 적 처치 시 사용
