@@ -6,6 +6,7 @@ public class NormalMonster : MonoBehaviour
 {
     public float moveSpeed = 1.5f;
     public float health = 100f;
+    public float maxHealth = 100f;
     public float attackDamage = 20f;
     public float attackElapsed = 0f;
     public float attackInterval = 0.5f;
@@ -16,10 +17,12 @@ public class NormalMonster : MonoBehaviour
 
     private void Awake()
     {
+        health = maxHealth;
         healthBar = GetComponentInChildren<Slider>();
 
         // 체력바 위치 조정
         healthBar.transform.position = transform.position + Vector3.up * 1.5f;
+        healthBar.value = health / maxHealth;
     }
 
     // Player의 Transform 방향으로 이동
@@ -41,7 +44,7 @@ public class NormalMonster : MonoBehaviour
         }
         
         healthBar.transform.forward = Camera.main.transform.forward;
-        healthBar.value = health;
+        healthBar.value = health / maxHealth;
 
         direction = target.position - transform.position;
 
