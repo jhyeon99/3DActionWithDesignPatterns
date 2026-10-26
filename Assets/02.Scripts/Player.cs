@@ -9,9 +9,13 @@ public class Player : MonoBehaviour
     [Header("Buff")]
     public float HealAmount = 20f;
 
-    [Header("Buff Key")]
-    [Tooltip("임시로 만든 버프 키")]
+    [Header("Key")]
+    [Tooltip("임시로 만든 키")]
     public KeyCode HealKey = KeyCode.Alpha1;
+    public KeyCode DamageKey = KeyCode.Alpha2;
+
+    [Header("Test Damage")]
+    public float TestDamage = 10f;
 
     // [Header("Hit")]
     // public float HitStunTime = 0.1f;
@@ -34,9 +38,16 @@ public class Player : MonoBehaviour
             return;
         }
 
+        // 임시 버프 키
         if (Input.GetKeyDown(HealKey))
         {
             UpgradeHeal(HealAmount);
+        }
+
+        // 임시 대미지 키
+        if (Input.GetKeyDown(DamageKey))
+        {
+            TakeDamage(TestDamage);
         }
 
         // if (HitStunTimer > 0f)
@@ -119,10 +130,35 @@ public class Player : MonoBehaviour
     {
         float hpRatio = CurrentHp / MaxHp;
         GUI.color = Color.black;
-        GUI.DrawTexture(new Rect(20f, 20f, 200f, 20f), Texture2D.whiteTexture);
+        GUI.DrawTexture(new Rect(20f, 20f, 300f, 30f), Texture2D.whiteTexture);
         GUI.color = Color.Lerp(Color.red, Color.green, hpRatio);
-        GUI.DrawTexture(new Rect(20f, 20f, 200f * hpRatio, 20f), Texture2D.whiteTexture);
+        GUI.DrawTexture(new Rect(20f, 20f, 300f * hpRatio, 30f), Texture2D.whiteTexture);
         GUI.color = Color.white;
-        GUI.Label(new Rect(25f, 20f, 200f, 20f), HpText);
+
+        GUIStyle hpTextStyle = new(GUI.skin.label)
+        {
+            fontSize = 18,
+            alignment = TextAnchor.MiddleLeft
+        };
+        Rect hpTextRect = new(28f, 20f, 300f, 30f);
+
+        float outline = 1.5f;
+        hpTextStyle.normal.textColor = Color.black;
+        for (int x = -1; x <= 1; x++)
+        {
+            for (int y = -1; y <= 1; y++)
+            {
+                if (x == 0 && y == 0)
+                {
+                    continue;
+                }
+
+                Rect outlineRect = new(hpTextRect.x + x * outline, hpTextRect.y + y * outline, hpTextRect.width, hpTextRect.height);
+                GUI.Label(outlineRect, HpText, hpTextStyle);
+            }
+        }
+
+        hpTextStyle.normal.textColor = Color.white;
+        GUI.Label(hpTextRect, HpText, hpTextStyle);
     }
 }
