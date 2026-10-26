@@ -283,7 +283,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: e35b0d6d9a4034d45a066bf72ebbb349, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -319,6 +319,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25a8660aa4c2b894090ec56613b53b31, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DebuffMonster
+  moveSpeed: 1.5
+  health: 100
+  attackDamage: 20
+  target: {fileID: 0}
+  direction: {x: 0, y: 0, z: 0}
+  healthBar: {fileID: 0}
+  castTime: 2
+  castCoolTime: 6
+  elpased: 0
+  ExpPrefab: {fileID: 8574134281708461924, guid: d33c2611e32445241a6c8a1b6ac0961c, type: 3}
 --- !u!136 &2377232939856255786
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -453,9 +463,9 @@ MonoBehaviour:
   m_HandleRect: {fileID: 0}
   m_Direction: 0
   m_MinValue: 0
-  m_MaxValue: 100
+  m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 100
+  m_Value: 1
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []

@@ -11,16 +11,17 @@ public class DashMonster : MonoBehaviour
     public float DashRecognizeRange = 5f;
     public float health = 50f;
     public float attackDamage = 20f;
+    public float attackElapsed = 0f;
+    public float attackInterval = 0.5f;
     public Transform target;
     public Vector3 direction;
     public Slider healthBar;
     public Coroutine DashCoroutine;
-
+    public GameObject ExpPrefab;
+    
     private void Awake()
     {
         healthBar = GetComponentInChildren<Slider>();
-
-        target = GameObject.FindGameObjectWithTag("Player").transform;
 
         // 체력바 위치 조정
         healthBar.transform.position = transform.position + Vector3.up * 1.5f;
@@ -29,8 +30,18 @@ public class DashMonster : MonoBehaviour
     // Player의 Transform 방향으로 이동
     public void Update()
     {
+        target = GameObject.FindGameObjectWithTag("Player").transform;
+        
         if (health <= 0)
         {
+            int random = Random.Range(1, 5);
+            
+            for(int i = 0; i < random; i++)
+            {
+                Instantiate(ExpPrefab, transform.position, transform.rotation);
+            }
+            
+            Destroy(gameObject);
             return;
         }
         
@@ -48,6 +59,12 @@ public class DashMonster : MonoBehaviour
             DashCoroutine = StartCoroutine(Dash(moveDirection, direction.magnitude));
             return;
         }
+        
+        // 돌진 중에는 이동하지 않도록
+        if (DashCoroutine != null)
+        {
+            return;
+        }
 
         transform.rotation = Quaternion.LookRotation(moveDirection);
         transform.Translate(
@@ -58,37 +75,55 @@ public class DashMonster : MonoBehaviour
 
     public IEnumerator Dash(Vector3 direction, float distance)
     {
+        Debug.Log("저돌맹진!!");
+        
         Vector3 endPosition = transform.position + direction * distance;
-
+        Vector3 dashDirection = endPosition - transform.position;
+        dashDirection.Normalize();
+        
         yield return new WaitForSeconds(2f);
 
         // 돌진 거리만큼 이동하면 종료하도록
-        while ((transform.position - endPosition).magnitude > 0.5f)
+        while (Vector3.Distance(transform.position, endPosition) > 0.2f)
         {
-            transform.Translate(direction * DashSpeed * Time.deltaTime);
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                endPosition,
+                DashSpeed * Time.deltaTime
+            );
             yield return null;
         }
-
+        
+        Debug.Log("저돌맹진 종료!!");
+        
         DashCoroutine = null;
     }
 
-    public void OnCollisionEnter(Collision collision)
+    public void OnCollisionStay(Collision collision)
     {
+        attackElapsed += Time.deltaTime;
+        
         if (collision.gameObject.tag == "Player")
         {
             GameObject gameObject = collision.gameObject;
 
-            if (gameObject != null)
+            if (gameObject != null && attackElapsed >= attackInterval)
             {
-                Debug.Log(gameObject.name);
+                Debug.Log("플레이어 공격!");
                 gameObject.GetComponent<Player>().TakeDamage(attackDamage);
+                attackElapsed = 0f;
             }
         }
     }
 
-    [ContextMenu("TakeDamage")]
-    public void TakeDamage()
+    public void TakeDamage(float damage)
     {
-        health -= 10;
+        health -= damage;
+    }
+
+    [ContextMenu("TakeDamage")]
+    public void TestTakeDamage()
+    {
+        TakeDamage(10);
     }
 }
