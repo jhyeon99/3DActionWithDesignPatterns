@@ -12,6 +12,7 @@ public class PlayerMove : MonoBehaviour
     public float DodgeSpeed = 30f;
     public float JumpSpeed = 10f; // 음 이거 왜있음? 
     public float CurrentSpeed = 0f;
+    public bool IsDodge = false;
 
     [Header("Components")]
     public CharacterController Controller;
