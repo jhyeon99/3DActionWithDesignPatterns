@@ -19,11 +19,11 @@ public class DashMonster : MonoBehaviour
     public Slider healthBar;
     public Coroutine DashCoroutine;
     public GameObject ExpPrefab;
-    
+
     private void Awake()
     {
         health = maxHealth;
-        
+
         healthBar = GetComponentInChildren<Slider>();
 
         // 체력바 위치 조정
@@ -35,20 +35,20 @@ public class DashMonster : MonoBehaviour
     public void Update()
     {
         target = GameObject.FindGameObjectWithTag("Player").transform;
-        
+
         if (health <= 0)
         {
             int random = Random.Range(1, 5);
-            
-            for(int i = 0; i < random; i++)
+
+            for (int i = 0; i < random; i++)
             {
                 Instantiate(ExpPrefab, transform.position, transform.rotation);
             }
-            
+
             Destroy(gameObject);
             return;
         }
-        
+
         healthBar.transform.forward = Camera.main.transform.forward;
         healthBar.value = health / maxHealth;
 
@@ -63,7 +63,7 @@ public class DashMonster : MonoBehaviour
             DashCoroutine = StartCoroutine(Dash(moveDirection, direction.magnitude));
             return;
         }
-        
+
         // 돌진 중에는 이동하지 않도록
         if (DashCoroutine != null)
         {
@@ -80,11 +80,11 @@ public class DashMonster : MonoBehaviour
     public IEnumerator Dash(Vector3 direction, float distance)
     {
         Debug.Log("저돌맹진!!");
-        
+
         Vector3 endPosition = transform.position + direction * distance;
         Vector3 dashDirection = endPosition - transform.position;
         dashDirection.Normalize();
-        
+
         yield return new WaitForSeconds(2f);
 
         // 돌진 거리만큼 이동하면 종료하도록
@@ -97,16 +97,16 @@ public class DashMonster : MonoBehaviour
             );
             yield return null;
         }
-        
+
         Debug.Log("저돌맹진 종료!!");
-        
+
         DashCoroutine = null;
     }
 
     public void OnCollisionStay(Collision collision)
     {
         attackElapsed += Time.deltaTime;
-        
+
         if (collision.gameObject.tag == "Player")
         {
             GameObject gameObject = collision.gameObject;

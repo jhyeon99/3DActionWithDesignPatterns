@@ -24,7 +24,7 @@ public class DebuffMonster : MonoBehaviour
     private void Awake()
     {
         health = maxHealth;
-        
+
         healthBar = GetComponentInChildren<Slider>();
 
         // 체력바 위치 조정
@@ -36,24 +36,24 @@ public class DebuffMonster : MonoBehaviour
     public void Update()
     {
         target = GameObject.FindGameObjectWithTag("Player").transform;
-        
+
         healthBar.transform.forward = Camera.main.transform.forward;
-        
+
         if (health <= 0)
         {
             int random = UnityEngine.Random.Range(1, 5);
-            
-            for(int i = 0; i < random; i++)
+
+            for (int i = 0; i < random; i++)
             {
                 Instantiate(ExpPrefab, transform.position, transform.rotation);
             }
-            
+
             Destroy(gameObject);
             return;
         }
-        
+
         healthBar.value = health / maxHealth;
-        
+
         transform.forward = (target.position - transform.position).normalized;
 
         if (elpased >= castCoolTime)
@@ -61,30 +61,28 @@ public class DebuffMonster : MonoBehaviour
             elpased = 0f;
             debuffCoroutine = StartCoroutine(Debuff());
         }
-        
-        if(debuffCoroutine == null)
+
+        if (debuffCoroutine == null)
         {
             elpased += Time.deltaTime;
-            
+
             direction = target.position - transform.position;
-            
+
             Vector3 moveDirection = direction.normalized;
             moveDirection.y = 0f;
-            
+
             transform.rotation = Quaternion.LookRotation(moveDirection);
             transform.Translate(
                 Vector3.forward * moveSpeed * Time.deltaTime,
                 Space.Self
             );
-
-            
         }
     }
 
     public void OnCollisionStay(Collision collision)
     {
         attackElapsed += Time.deltaTime;
-        
+
         if (collision.gameObject.tag == "Player")
         {
             GameObject gameObject = collision.gameObject;
@@ -103,7 +101,7 @@ public class DebuffMonster : MonoBehaviour
         int randomDebuff = UnityEngine.Random.Range(1, 4);
 
         yield return new WaitForSeconds(castTime);
-        
+
         switch (randomDebuff)
         {
             case 1: // 이속 감소
@@ -120,12 +118,12 @@ public class DebuffMonster : MonoBehaviour
         elpased = 0f;
         debuffCoroutine = null;
     }
-    
+
     public void TakeDamage(float damage)
     {
         health -= damage;
     }
-    
+
     [ContextMenu("TakeDamage")]
     public void TestTakeDamage()
     {

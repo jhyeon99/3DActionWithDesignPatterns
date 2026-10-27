@@ -42,7 +42,7 @@ public class Exp : MonoBehaviour
             // magnetRange보다 가까우면 추적 시작
             BeginAttraction();
         }
-        
+
         // 플레이어의 경험치 획득 범위 안에 도달하면 Destroy 
         if (Vector3.Distance(transform.position, player.position) <= collectDistance)
         {
@@ -53,8 +53,8 @@ public class Exp : MonoBehaviour
 
         MoveAlongBezierCurve();
     }
-    
-    
+
+
     // 플레이어 추적을 시작한다.
     private void BeginAttraction()
     {
@@ -80,8 +80,8 @@ public class Exp : MonoBehaviour
         // 2차 베지어 곡선: 시작점, 제어점, 끝점
         float inverseT = 1f - t;
         transform.position = inverseT * inverseT * curveStart
-                           + 2f * inverseT * t * curveControl
-                           + t * t * curveEnd;
+                             + 2f * inverseT * t * curveControl
+                             + t * t * curveEnd;
 
         if (t >= 1f)
         {
