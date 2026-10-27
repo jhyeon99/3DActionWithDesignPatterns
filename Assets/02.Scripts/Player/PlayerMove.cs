@@ -13,22 +13,34 @@ public class PlayerMove : MonoBehaviour
     public float JumpSpeed = 10f; // 음 이거 왜있음? 
     public float CurrentSpeed = 0f;
     public bool IsDodge = false;
+    public float MoveSpeedBonusRate = 0f; // 증강으로 늘어난 이동 속도 비율
 
     [Header("Components")]
     public CharacterController Controller;
 
     public Transform CameraTransform;
 
+    private Player player;
+    private float baseMoveSpeed;
+
     private void Awake()
     {
         Controller = GetComponent<CharacterController>();
+        player = GetComponent<Player>();
 
+        baseMoveSpeed = MoveSpeed;
         CurrentSpeed = MoveSpeed;
     }
 
 
     private void Update()
     {
+        // 기절 중에는 이동/회피 불가
+        if (player != null && player.IsStunned)
+        {
+            return;
+        }
+
         // 1. 입력 받는다.
         float vertical = Input.GetAxis("Vertical");
         float horizontal = Input.GetAxis("Horizontal");
@@ -45,10 +57,29 @@ public class PlayerMove : MonoBehaviour
             StartCoroutine(Dodge());
         }
 
-        Debug.Log($"Speed : {CurrentSpeed}");
-
-        Vector3 velocity = direction * CurrentSpeed * Time.deltaTime;
+        float slowRate = player != null && player.IsMoveSlowed ? player.MoveSlowRate : 1f;
+        Vector3 velocity = direction * CurrentSpeed * slowRate * Time.deltaTime;
         Controller.Move(velocity);
+    }
+
+    // 증강: 이동 속도 +rate (기본값 대비 누적)
+    public void UpgradeMoveSpeed(float rate)
+    {
+        MoveSpeedBonusRate += rate;
+        MoveSpeed = baseMoveSpeed * (1f + MoveSpeedBonusRate);
+        if (!IsDodge)
+        {
+            CurrentSpeed = MoveSpeed;
+        }
+    }
+
+    public void ResetStats()
+    {
+        StopAllCoroutines();
+        IsDodge = false;
+        MoveSpeedBonusRate = 0f;
+        MoveSpeed = baseMoveSpeed;
+        CurrentSpeed = MoveSpeed;
     }
 
     private IEnumerator Dodge()
