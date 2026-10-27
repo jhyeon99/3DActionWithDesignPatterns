@@ -55,6 +55,16 @@ public class GameManager : MonoBehaviour
     [SerializeField] public Transform[] SpawnPoints;
     [SerializeField] public int SpawnCount = 3;
 
+    [Header("스폰 위치 보정")]
+    [Tooltip("스폰 포인트 주변으로 흩뿌리는 반경. 같은 지점에 겹쳐 쌓이는 것을 막는다.")]
+    public float SpawnJitterRadius = 4f;
+    [Tooltip("겹침/시야 검사에 실패했을 때 새 위치를 다시 뽑는 횟수")]
+    public int SpawnRetryCount = 8;
+    [Tooltip("카메라 시야 안에는 스폰하지 않는다. (모든 포인트가 시야 안이면 원래 포인트에 스폰)")]
+    public bool SpawnOutsideView = true;
+    [Tooltip("시야 판정 여유분(뷰포트 비율). 값이 클수록 더 멀리서 스폰한다.")]
+    public float SpawnViewMargin = 0.1f;
+
     [Header("스폰 난이도")]
     public int InitialSpawnCount = 3;
     public float SpawnIncreaseInterval = 10f;
@@ -315,7 +325,101 @@ public class GameManager : MonoBehaviour
 
         if (prefab == null || point == null)
             return null;
-        return Instantiate(prefab, point.position, point.rotation);
+        return Instantiate(prefab, FindSpawnPosition(prefab, pointIndex), point.rotation);
+    }
+
+    private static readonly RaycastHit[] groundHits = new RaycastHit[16];
+
+    // 스폰 포인트 주변의 지면 위에서, 시야 밖이고 다른 물체와 겹치지 않는 위치를 찾는다.
+    // 포인트가 시야 안이면 다음 포인트를 시도하고, 모두 실패하면 원래 포인트의 지면 위치를 쓴다.
+    private Vector3 FindSpawnPosition(GameObject prefab, int pointIndex)
+    {
+        // 프리팹의 캡슐 콜라이더로 발바닥 높이와 겹침 검사 크기를 구한다.
+        float bottomOffset = 1f;
+        float radius = 0.5f;
+        float height = 2f;
+        if (prefab.TryGetComponent(out CapsuleCollider capsule))
+        {
+            float scale = prefab.transform.localScale.y;
+            radius = capsule.radius * scale;
+            height = Mathf.Max(capsule.height * scale, radius * 2f);
+            bottomOffset = height * 0.5f - capsule.center.y * scale;
+        }
+
+        for (int i = 0; i < SpawnPoints.Length; i++)
+        {
+            Transform point = SpawnPoints[(pointIndex + i) % SpawnPoints.Length];
+            if (point == null)
+                continue;
+
+            for (int attempt = 0; attempt < Mathf.Max(1, SpawnRetryCount); attempt++)
+            {
+                Vector2 offset = Random.insideUnitCircle * SpawnJitterRadius;
+                Vector3 probe = new Vector3(point.position.x + offset.x, 0f, point.position.z + offset.y);
+
+                if (!TryGetGroundY(probe, out float groundY))
+                    continue;
+
+                Vector3 position = new Vector3(probe.x, groundY + bottomOffset + 0.02f, probe.z);
+
+                // 이 포인트가 시야 안이면 다음 포인트로 넘어간다.
+                if (SpawnOutsideView && IsInCameraView(position))
+                    break;
+
+                float half = Mathf.Max(0f, height * 0.5f - radius);
+                if (Physics.CheckCapsule(position + Vector3.down * half, position + Vector3.up * half, radius,
+                        ~0, QueryTriggerInteraction.Ignore))
+                    continue;
+
+                return position;
+            }
+        }
+
+        // 모두 실패: 원래 포인트의 지면 위에 그대로 스폰한다. (몬스터가 사라지지 않도록)
+        Vector3 fallback = SpawnPoints[pointIndex].position;
+        if (TryGetGroundY(fallback, out float fallbackGroundY))
+            fallback.y = fallbackGroundY + bottomOffset + 0.02f;
+        return fallback;
+    }
+
+    // 위에서 아래로 쏜 레이 중 가장 낮은 고정 콜라이더의 높이를 지면으로 본다.
+    // (장애물 윗면이나 몬스터/플레이어 위를 지면으로 착각하지 않도록 리지드바디·캐릭터 컨트롤러는 제외)
+    private static bool TryGetGroundY(Vector3 xz, out float groundY)
+    {
+        groundY = 0f;
+        int count = Physics.RaycastNonAlloc(new Vector3(xz.x, 100f, xz.z), Vector3.down, groundHits, 200f, ~0,
+            QueryTriggerInteraction.Ignore);
+
+        bool found = false;
+        float lowest = float.MaxValue;
+        for (int i = 0; i < count; i++)
+        {
+            Collider hitCollider = groundHits[i].collider;
+            if (hitCollider.attachedRigidbody != null || hitCollider is CharacterController)
+                continue;
+
+            if (groundHits[i].point.y < lowest)
+            {
+                lowest = groundHits[i].point.y;
+                found = true;
+            }
+        }
+
+        if (found)
+            groundY = lowest;
+        return found;
+    }
+
+    private bool IsInCameraView(Vector3 worldPosition)
+    {
+        Camera mainCamera = Camera.main;
+        if (mainCamera == null)
+            return false;
+
+        Vector3 viewport = mainCamera.WorldToViewportPoint(worldPosition);
+        return viewport.z > 0f &&
+               viewport.x > -SpawnViewMargin && viewport.x < 1f + SpawnViewMargin &&
+               viewport.y > -SpawnViewMargin && viewport.y < 1f + SpawnViewMargin;
     }
 
     // 살아 있는 몬스터를 모두 제거한다.
