@@ -18,7 +18,7 @@ public class PlayerBullet : MonoBehaviour
     {
         if (collider.TryGetComponent(out NormalMonster normalMonster))
         {
-            normalMonster.HP -= Damage;
+            normalMonster.health -= Damage;
             RemainPierce--;
         }
 
@@ -30,7 +30,7 @@ public class PlayerBullet : MonoBehaviour
 
         if (collider.TryGetComponent(out DashMonster dashMonster))
         {
-            dashMonster.HP -= Damage;
+            dashMonster.health -= Damage;
             RemainPierce--;
         }
 
@@ -42,7 +42,7 @@ public class PlayerBullet : MonoBehaviour
 
         if (collider.TryGetComponent(out DebuffMonster debuffMonster))
         {
-            debuffMonster.HP -= Damage;
+            debuffMonster.health -= Damage;
             RemainPierce--;
         }
 

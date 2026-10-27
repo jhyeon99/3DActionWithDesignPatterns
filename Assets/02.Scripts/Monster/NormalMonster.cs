@@ -29,20 +29,20 @@ public class NormalMonster : MonoBehaviour
     public void Update()
     {
         target = GameObject.FindGameObjectWithTag("Player").transform;
-        
+
         if (health <= 0)
         {
             int random = UnityEngine.Random.Range(1, 5);
-            
-            for(int i = 0; i < random; i++)
+
+            for (int i = 0; i < random; i++)
             {
                 Instantiate(ExpPrefab, transform.position, transform.rotation);
             }
-            
+
             Destroy(gameObject);
             return;
         }
-        
+
         healthBar.transform.forward = Camera.main.transform.forward;
         healthBar.value = health / maxHealth;
 
@@ -56,13 +56,12 @@ public class NormalMonster : MonoBehaviour
             Vector3.forward * moveSpeed * Time.deltaTime,
             Space.Self
         );
-
     }
 
     public void OnCollisionStay(Collision collision)
     {
         attackElapsed += Time.deltaTime;
-        
+
         if (collision.gameObject.tag == "Player")
         {
             GameObject gameObject = collision.gameObject;
@@ -75,7 +74,7 @@ public class NormalMonster : MonoBehaviour
             }
         }
     }
-    
+
     public void TakeDamage(float damage)
     {
         health -= damage;
