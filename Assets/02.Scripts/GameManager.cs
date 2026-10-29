@@ -77,6 +77,9 @@ public class GameManager : MonoBehaviour
 
     public static GameManager Instance { get; private set; }
 
+    // 게임 이벤트 버스. 다른 담당은 이 버스로 이벤트를 발행/구독한다. (ServiceLocator가 생기면 그쪽으로 옮긴다)
+    public IGameEventBus EventBus { get; private set; }
+
     private Player player;
     private PlayerFire playerFire;
     private PlayerMove playerMove;
@@ -84,7 +87,33 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        EventBus = new GameEventBus();
         DontDestroyOnLoad(gameObject);
+    }
+
+    // 구독한 이벤트는 반드시 해제한다.
+    private void OnEnable()
+    {
+        EventBus.Subscribe<EnemyKilledEvent>(HandleEnemyKilled);
+        EventBus.Subscribe<ExpCollectedEvent>(HandleExpCollected);
+    }
+
+    private void OnDisable()
+    {
+        EventBus.Unsubscribe<EnemyKilledEvent>(HandleEnemyKilled);
+        EventBus.Unsubscribe<ExpCollectedEvent>(HandleExpCollected);
+    }
+
+    // 적이 죽으면 점수와 처치 수를 올린다.
+    private void HandleEnemyKilled(EnemyKilledEvent gameEvent)
+    {
+        OnMonsterKilled(gameEvent.MonsterName, gameEvent.ScoreValue);
+    }
+
+    // 경험치 구슬을 먹으면 경험치를 올린다.
+    private void HandleExpCollected(ExpCollectedEvent gameEvent)
+    {
+        ExperienceUp(gameEvent.Amount);
     }
 
     private void Start()
@@ -198,11 +227,16 @@ public class GameManager : MonoBehaviour
         GameOverPanel.SetActive(false);
 
         PausePanel.SetActive(false);
+
+        EventBus.Publish(new GameStartedEvent());
     }
 
     // 게임 종료
     public void GameOver()
     {
+        // 테스트 키(4번)로 여러 번 불려도 이벤트는 한 번만 발행한다.
+        bool wasGameStarted = IsGameStarted;
+
         GamePause();
         IsGameStarted = false;
         IsGaming = false;
@@ -210,6 +244,11 @@ public class GameManager : MonoBehaviour
         GameOverPanel.SetActive(true);
         UpgradePanel.SetActive(false);
         PausePanel.SetActive(false);
+
+        if (wasGameStarted)
+        {
+            EventBus.Publish(new GameOverEvent(CurrentTime, Score, KillCount));
+        }
     }
 
     public void GameExit()
@@ -234,6 +273,7 @@ public class GameManager : MonoBehaviour
     {
         Score += value;
         ScoreText.text = Score.ToString("0");
+        EventBus.Publish(new ScoreChangedEvent(Score));
     }
 
     // 적 처치 시 사용
@@ -259,6 +299,7 @@ public class GameManager : MonoBehaviour
         ExperienceSlider.maxValue = MaxExperience;
         ExperienceText.text = $"{Experience:0} / {MaxExperience:0}";
         LevelText.text = Level.ToString("0");
+        EventBus.Publish(new LevelUpEvent(Level));
         if (!UpgradePanel.activeSelf && IsGaming)
         {
             OpenUpgradeSelection();
@@ -269,6 +310,7 @@ public class GameManager : MonoBehaviour
     {
         Score = Mathf.Max(0, Score - value);
         ScoreText.text = Score.ToString("0");
+        EventBus.Publish(new ScoreChangedEvent(Score));
     }
 
     public void GamePause()
@@ -302,6 +344,8 @@ public class GameManager : MonoBehaviour
 
         if (MonsterPrefabs == null || MonsterPrefabs.Length == 0 || SpawnPoints == null || SpawnPoints.Length == 0)
             return;
+
+        EventBus.Publish(new WaveStartedEvent(SpawnCount, CurrentTime));
 
         for (int i = 0; i < SpawnCount; i++)
         {
