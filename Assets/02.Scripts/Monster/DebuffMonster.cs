@@ -5,102 +5,102 @@ using UnityEngine.UI;
 
 public class DebuffMonster : MonoBehaviour
 {
-    public float moveSpeed = 1.5f;
-    public float health = 100f;
-    public float maxHealth = 100f;
-    public float attackDamage = 20f;
-    public float attackElapsed = 0f;
-    public float attackInterval = 0.5f;
-    public Transform target;
-    public Vector3 direction;
-    public Slider healthBar;
-    public float castTime = 2f;
-    public float castCoolTime = 6f;
-    public float elpased = 0f;
-    public GameObject ExpPrefab;
+    [SerializeField] private float _moveSpeed = 1.5f;
+    private float _health = 100f;
+    [SerializeField] private float _maxHealth = 100f;
+    [SerializeField] private float _attackDamage = 20f;
+    private float _attackElapsed = 0f;
+    [SerializeField] private float _attackInterval = 0.5f;
+    private Transform _target;
+    private Vector3 _direction;
+    private Slider _healthBar;
+    [SerializeField] private float _castTime = 2f;
+    [SerializeField] private float _castCoolTime = 6f;
+    private float _elapsed = 0f;
+    [SerializeField] private GameObject _expPrefab;
 
-    public Coroutine debuffCoroutine;
+    private Coroutine _debuffCoroutine;
 
     private void Awake()
     {
-        health = maxHealth;
+        _health = _maxHealth;
 
-        healthBar = GetComponentInChildren<Slider>();
+        _healthBar = GetComponentInChildren<Slider>();
 
         // 체력바 위치 조정
-        healthBar.transform.position = transform.position + Vector3.up * 1.5f;
-        healthBar.value = health / maxHealth;
+        _healthBar.transform.position = transform.position + Vector3.up * 1.5f;
+        _healthBar.value = _health / _maxHealth;
     }
 
     // Player의 Transform 방향으로 이동
-    public void Update()
+    private void Update()
     {
-        target = GameObject.FindGameObjectWithTag("Player").transform;
+        _target = GameObject.FindGameObjectWithTag("Player").transform;
 
-        healthBar.transform.forward = Camera.main.transform.forward;
+        _healthBar.transform.forward = Camera.main.transform.forward;
 
-        if (health <= 0)
+        if (_health <= 0)
         {
             int random = UnityEngine.Random.Range(1, 5);
 
             for (int i = 0; i < random; i++)
             {
-                Instantiate(ExpPrefab, transform.position, transform.rotation);
+                Instantiate(_expPrefab, transform.position, transform.rotation);
             }
 
             Destroy(gameObject);
             return;
         }
 
-        healthBar.value = health / maxHealth;
+        _healthBar.value = _health / _maxHealth;
 
-        transform.forward = (target.position - transform.position).normalized;
+        transform.forward = (_target.position - transform.position).normalized;
 
-        if (elpased >= castCoolTime)
+        if (_elapsed >= _castCoolTime)
         {
-            elpased = 0f;
-            debuffCoroutine = StartCoroutine(Debuff());
+            _elapsed = 0f;
+            _debuffCoroutine = StartCoroutine(Debuff());
         }
 
-        if (debuffCoroutine == null)
+        if (_debuffCoroutine == null)
         {
-            elpased += Time.deltaTime;
+            _elapsed += Time.deltaTime;
 
-            direction = target.position - transform.position;
+            _direction = _target.position - transform.position;
 
-            Vector3 moveDirection = direction.normalized;
+            Vector3 moveDirection = _direction.normalized;
             moveDirection.y = 0f;
 
             transform.rotation = Quaternion.LookRotation(moveDirection);
             transform.Translate(
-                Vector3.forward * moveSpeed * Time.deltaTime,
+                Vector3.forward * _moveSpeed * Time.deltaTime,
                 Space.Self
             );
         }
     }
 
-    public void OnCollisionStay(Collision collision)
+    private void OnCollisionStay(Collision collision)
     {
-        attackElapsed += Time.deltaTime;
+        _attackElapsed += Time.deltaTime;
 
         if (collision.gameObject.tag == "Player")
         {
             GameObject gameObject = collision.gameObject;
 
-            if (gameObject != null && attackElapsed >= attackInterval)
+            if (gameObject != null && _attackElapsed >= _attackInterval)
             {
                 Debug.Log(gameObject.name);
-                gameObject.GetComponent<Player>().TakeDamage(attackDamage);
-                attackElapsed = 0f;
+                gameObject.GetComponent<Player>().TakeDamage(_attackDamage);
+                _attackElapsed = 0f;
             }
         }
     }
 
-    public IEnumerator Debuff()
+    private IEnumerator Debuff()
     {
         int randomDebuff = UnityEngine.Random.Range(1, 4);
 
-        yield return new WaitForSeconds(castTime);
+        yield return new WaitForSeconds(_castTime);
 
         switch (randomDebuff)
         {
@@ -115,18 +115,18 @@ public class DebuffMonster : MonoBehaviour
                 break;
         }
 
-        elpased = 0f;
-        debuffCoroutine = null;
+        _elapsed = 0f;
+        _debuffCoroutine = null;
     }
 
     public void TakeDamage(float damage)
     {
-        health -= damage;
+        _health -= damage;
     }
 
     [ContextMenu("TakeDamage")]
-    public void TestTakeDamage()
+    private void TestTakeDamage()
     {
-        health -= 10;
+        _health -= 10;
     }
 }

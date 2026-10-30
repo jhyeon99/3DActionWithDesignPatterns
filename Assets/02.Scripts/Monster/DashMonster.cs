@@ -5,79 +5,79 @@ using UnityEngine.UI;
 
 public class DashMonster : MonoBehaviour
 {
-    public float moveSpeed = 1.5f;
-    public float DashSpeed = 5f;
-    public float DashRange = 10f;
-    public float DashRecognizeRange = 5f;
-    public float health = 50f;
-    public float maxHealth = 50f;
-    public float attackDamage = 20f;
-    public float attackElapsed = 0f;
-    public float attackInterval = 0.5f;
-    public Transform target;
-    public Vector3 direction;
-    public Slider healthBar;
-    public Coroutine DashCoroutine;
-    public GameObject ExpPrefab;
+    [SerializeField] private float _moveSpeed = 1.5f;
+    [SerializeField] private float _dashSpeed = 5f;
+    [SerializeField] private float _dashRange = 10f;
+    [SerializeField] private float _dashRecognizeRange = 5f;
+    private float _health = 50f;
+    [SerializeField] private float _maxHealth = 50f;
+    [SerializeField] private float _attackDamage = 20f;
+    private float _attackElapsed = 0f;
+    [SerializeField] private float _attackInterval = 0.5f;
+    private Transform _target;
+    private Vector3 _direction;
+    private Slider _healthBar;
+    private Coroutine _dashCoroutine;
+    [SerializeField] private GameObject _expPrefab;
 
     private void Awake()
     {
-        health = maxHealth;
+        _health = _maxHealth;
 
-        healthBar = GetComponentInChildren<Slider>();
+        _healthBar = GetComponentInChildren<Slider>();
 
         // 체력바 위치 조정
-        healthBar.transform.position = transform.position + Vector3.up * 1.5f;
-        healthBar.value = health / maxHealth;
+        _healthBar.transform.position = transform.position + Vector3.up * 1.5f;
+        _healthBar.value = _health / _maxHealth;
     }
 
     // Player의 Transform 방향으로 이동
-    public void Update()
+    private void Update()
     {
-        target = GameObject.FindGameObjectWithTag("Player").transform;
+        _target = GameObject.FindGameObjectWithTag("Player").transform;
 
-        if (health <= 0)
+        if (_health <= 0)
         {
             int random = Random.Range(1, 5);
 
             for (int i = 0; i < random; i++)
             {
-                Instantiate(ExpPrefab, transform.position, transform.rotation);
+                Instantiate(_expPrefab, transform.position, transform.rotation);
             }
 
             Destroy(gameObject);
             return;
         }
 
-        healthBar.transform.forward = Camera.main.transform.forward;
-        healthBar.value = health / maxHealth;
+        _healthBar.transform.forward = Camera.main.transform.forward;
+        _healthBar.value = _health / _maxHealth;
 
-        direction = target.position - transform.position;
+        _direction = _target.position - transform.position;
 
-        Vector3 moveDirection = direction.normalized;
+        Vector3 moveDirection = _direction.normalized;
         moveDirection.y = 0f;
 
         // 플레이어와의 거리가 돌진 인식 범위보다 작아지면 돌진 수행
-        if (direction.magnitude < DashRange && DashCoroutine == null)
+        if (_direction.magnitude < _dashRange && _dashCoroutine == null)
         {
-            DashCoroutine = StartCoroutine(Dash(moveDirection, direction.magnitude));
+            _dashCoroutine = StartCoroutine(Dash(moveDirection, _direction.magnitude));
             return;
         }
 
         // 돌진 중에는 이동하지 않도록
-        if (DashCoroutine != null)
+        if (_dashCoroutine != null)
         {
             return;
         }
 
         transform.rotation = Quaternion.LookRotation(moveDirection);
         transform.Translate(
-            Vector3.forward * moveSpeed * Time.deltaTime,
+            Vector3.forward * _moveSpeed * Time.deltaTime,
             Space.Self
         );
     }
 
-    public IEnumerator Dash(Vector3 direction, float distance)
+    private IEnumerator Dash(Vector3 direction, float distance)
     {
         Debug.Log("저돌맹진!!");
 
@@ -93,40 +93,40 @@ public class DashMonster : MonoBehaviour
             transform.position = Vector3.MoveTowards(
                 transform.position,
                 endPosition,
-                DashSpeed * Time.deltaTime
+                _dashSpeed * Time.deltaTime
             );
             yield return null;
         }
 
         Debug.Log("저돌맹진 종료!!");
 
-        DashCoroutine = null;
+        _dashCoroutine = null;
     }
 
-    public void OnCollisionStay(Collision collision)
+    private void OnCollisionStay(Collision collision)
     {
-        attackElapsed += Time.deltaTime;
+        _attackElapsed += Time.deltaTime;
 
         if (collision.gameObject.tag == "Player")
         {
             GameObject gameObject = collision.gameObject;
 
-            if (gameObject != null && attackElapsed >= attackInterval)
+            if (gameObject != null && _attackElapsed >= _attackInterval)
             {
                 Debug.Log("플레이어 공격!");
-                gameObject.GetComponent<Player>().TakeDamage(attackDamage);
-                attackElapsed = 0f;
+                gameObject.GetComponent<Player>().TakeDamage(_attackDamage);
+                _attackElapsed = 0f;
             }
         }
     }
 
     public void TakeDamage(float damage)
     {
-        health -= damage;
+        _health -= damage;
     }
 
     [ContextMenu("TakeDamage")]
-    public void TestTakeDamage()
+    private void TestTakeDamage()
     {
         TakeDamage(10);
     }
