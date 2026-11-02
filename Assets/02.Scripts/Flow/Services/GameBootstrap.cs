@@ -7,13 +7,37 @@ public class GameBootstrap : MonoBehaviour
 {
     private void Awake()
     {
-        // 서비스를 새로 만들 때 여기에 한 줄씩 추가한다.
-        // TODO: 이벤트 버스(IGameEventBus)는 feature/E-Observer와 합친 뒤 등록한다.
-        ServiceLocator.Register<IClock>(new UnityClock());
+        RegisterDefaultServices();
     }
 
     private void OnDestroy()
     {
         ServiceLocator.Clear();
+    }
+
+    // 아직 등록되지 않은 서비스만 기본(Legacy) 구현으로 등록한다.
+    // 다른 담당이 자기 구현을 먼저 등록했다면 그대로 두고, 이 씬에 GameBootstrap이 없으면 GameManager가 대신 부른다.
+    // 서비스를 새로 만들 때 여기에 한 줄씩 추가한다.
+    public static void RegisterDefaultServices()
+    {
+        if (!ServiceLocator.TryGet(out IClock _))
+        {
+            ServiceLocator.Register<IClock>(new UnityClock());
+        }
+
+        if (!ServiceLocator.TryGet(out IGameEventBus _))
+        {
+            ServiceLocator.Register<IGameEventBus>(new GameEventBus());
+        }
+
+        if (!ServiceLocator.TryGet(out IPlayerStatus _))
+        {
+            ServiceLocator.Register<IPlayerStatus>(new LegacyPlayerStatus());
+        }
+
+        if (!ServiceLocator.TryGet(out IUpgradeApplier _))
+        {
+            ServiceLocator.Register<IUpgradeApplier>(new LegacyUpgradeApplier());
+        }
     }
 }

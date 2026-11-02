@@ -3,16 +3,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public enum UpgradeType
-{
-    AttackSpeed,
-    Damage,
-    MoveSpeed,
-    HealthUp,
-    Heal,
-    DefenseUp
-}
-
 public class GameManager : MonoBehaviour
 {
     /// <summary>
@@ -77,17 +67,24 @@ public class GameManager : MonoBehaviour
 
     public static GameManager Instance { get; private set; }
 
-    // 게임 이벤트 버스. 다른 담당은 이 버스로 이벤트를 발행/구독한다. (ServiceLocator가 생기면 그쪽으로 옮긴다)
+    // 게임 이벤트 버스. 다른 담당은 이 버스로 이벤트를 발행/구독한다.
+    // 같은 버스를 ServiceLocator.Get<IGameEventBus>()로도 꺼낼 수 있다.
     public IGameEventBus EventBus { get; private set; }
 
-    private Player player;
-    private PlayerFire playerFire;
-    private PlayerMove playerMove;
+    // GameManager는 Player 같은 구체 클래스가 아니라 계약(인터페이스)으로만 접근한다.
+    private IPlayerStatus playerStatus;
+    private IUpgradeApplier upgradeApplier;
 
     private void Awake()
     {
         Instance = this;
-        EventBus = new GameEventBus();
+
+        // GameBootstrap이 없는 씬에서도 동작하도록 기본 서비스를 등록해 둔다.
+        GameBootstrap.RegisterDefaultServices();
+        EventBus = ServiceLocator.Get<IGameEventBus>();
+        playerStatus = ServiceLocator.Get<IPlayerStatus>();
+        upgradeApplier = ServiceLocator.Get<IUpgradeApplier>();
+
         DontDestroyOnLoad(gameObject);
     }
 
@@ -170,7 +167,7 @@ public class GameManager : MonoBehaviour
         }
 
         // 게임 오버: 플레이어 사망 시 (Test용: 4번 키로도 가능)
-        if (IsGameStarted && ResolvePlayer() != null && player.IsDead)
+        if (IsGameStarted && playerStatus.IsDead)
         {
             GameOver();
         }
@@ -481,24 +478,11 @@ public class GameManager : MonoBehaviour
         foreach (var exp in FindObjectsByType<Exp>(FindObjectsSortMode.None)) Destroy(exp.gameObject);
         foreach (var bullet in FindObjectsByType<PlayerBullet>(FindObjectsSortMode.None)) Destroy(bullet.gameObject);
 
-        if (ResolvePlayer() != null) player.ResetForNewRun();
-        if (playerFire == null) playerFire = FindFirstObjectByType<PlayerFire>();
-        if (playerFire != null) playerFire.ResetStats();
-        if (playerMove == null) playerMove = FindFirstObjectByType<PlayerMove>();
-        if (playerMove != null) playerMove.ResetStats();
+        playerStatus.ResetForNewRun();
+        upgradeApplier.ResetStats();
 
         DebugStats.Log("Run restarted");
         GameStart();
-    }
-
-    private Player ResolvePlayer()
-    {
-        if (player == null)
-        {
-            player = FindFirstObjectByType<Player>();
-        }
-
-        return player;
     }
 
     // 증강 패널 오픈 (랜덤 증강 선정 후 오픈)
@@ -581,41 +565,7 @@ public class GameManager : MonoBehaviour
     // 증강 적용
     public void ApplyUpgrade(UpgradeType upgradeType)
     {
-        ResolvePlayer();
-        if (playerFire == null) playerFire = FindFirstObjectByType<PlayerFire>();
-        if (playerMove == null) playerMove = FindFirstObjectByType<PlayerMove>();
-
-        switch (upgradeType)
-        {
-            case UpgradeType.AttackSpeed:
-                if (playerFire != null) playerFire.UpgradeAttackSpeed(0.15f);
-                Debug.Log("공격 속도 증가");
-                break;
-
-            case UpgradeType.Damage:
-                if (playerFire != null) playerFire.UpgradeDamage(0.2f);
-                Debug.Log("공격력 증가");
-                break;
-
-            case UpgradeType.MoveSpeed:
-                if (playerMove != null) playerMove.UpgradeMoveSpeed(0.15f);
-                Debug.Log("이동 속도 증가");
-                break;
-
-            case UpgradeType.Heal:
-                if (player != null) player.UpgradeHeal(30f);
-                Debug.Log("체력 회복");
-                break;
-
-            case UpgradeType.HealthUp:
-                if (player != null) player.UpgradeMaxHp(10f);
-                Debug.Log("최대 체력 증가");
-                break;
-            case UpgradeType.DefenseUp:
-                if (player != null) player.UpgradeDefense(10f);
-                Debug.Log("방어력 증가");
-                break;
-        }
+        upgradeApplier.Apply(upgradeType);
 
         DebugStats.Log($"Upgrade applied: {upgradeType}");
     }
