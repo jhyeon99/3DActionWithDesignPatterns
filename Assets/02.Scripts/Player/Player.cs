@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public enum PlayerDebuff
 {
@@ -7,81 +8,81 @@ public enum PlayerDebuff
     Stun
 }
 
+[RequireComponent(typeof(PlayerStat))]
 public class Player : MonoBehaviour
 {
-    [Header("HP")]
-    public float MaxHp = 100f;
-    public float DefensePercent = 15f;
-
-    [Header("Debuff")]
-    [Tooltip("이동 속도 감소 디버프 중 적용되는 배율")]
-    public float MoveSlowRate = 0.6f;
-    public float MoveSlowTimer = 0f;
-    public float AttackSlowTimer = 0f;
-    public float StunTimer = 0f;
-
     [Header("Buff")]
-    public float HealAmount = 20f;
+    [FormerlySerializedAs("HealAmount")]
+    [SerializeField] private float _healAmount = 20f;
 
     [Header("Key")]
     [Tooltip("임시로 만든 키")]
-    public KeyCode HealKey = KeyCode.Alpha1;
-    public KeyCode DamageKey = KeyCode.Alpha2;
+    [FormerlySerializedAs("HealKey")]
+    [SerializeField] private KeyCode _healKey = KeyCode.Alpha1;
+    [FormerlySerializedAs("DamageKey")]
+    [SerializeField] private KeyCode _damageKey = KeyCode.Alpha2;
 
     [Header("Test Damage")]
-    public float TestDamage = 10f;
+    [FormerlySerializedAs("TestDamage")]
+    [SerializeField] private float _testDamage = 10f;
+
+
+
 
     // [Header("Hit")]
     // public float HitStunTime = 0.1f;
 
-    public float CurrentHp = 100f;
+    private float _moveSlowTimer = 0f;
+    private float _attackSlowTimer = 0f;
+    private float _stunTimer = 0f;
+
+    private float _currentHp = 100f;
     // public float HitStunTimer = 0f;
-    public bool IsDead = false;
+    private bool _isDead = false;
     // public bool IsHitStun = false;
-    public string HpText = "";
+    private string _hpText = "";
 
-    public bool IsStunned => StunTimer > 0f;
-    public bool IsMoveSlowed => MoveSlowTimer > 0f;
-    public bool IsAttackSlowed => AttackSlowTimer > 0f;
+    public bool IsStunned => _stunTimer > 0f;
+    public bool IsMoveSlowed => _moveSlowTimer > 0f;
+    public bool IsAttackSlowed => _attackSlowTimer > 0f;
 
-    // 새 런 시작 시 복원할 초기값
-    private float initialMaxHp;
-    private float initialDefense;
-    private Vector3 startPosition;
+    private PlayerStat _stat;
 
-    public void Awake()
+    // 새 런 시작 시 복원할 위치
+    private Vector3 _startPosition;
+
+    private void Awake()
     {
-        initialMaxHp = MaxHp;
-        initialDefense = DefensePercent;
-        startPosition = transform.position;
+        _stat = GetComponent<PlayerStat>();
+        _startPosition = transform.position;
     }
 
-    public void Start()
+    private void Start()
     {
-        CurrentHp = MaxHp;
+        _currentHp = _stat.MaxHp;
     }
 
-    public void Update()
+    private void Update()
     {
-        if (IsDead)
+        if (_isDead)
         {
             return;
         }
 
-        StunTimer = Mathf.Max(0f, StunTimer - Time.deltaTime);
-        MoveSlowTimer = Mathf.Max(0f, MoveSlowTimer - Time.deltaTime);
-        AttackSlowTimer = Mathf.Max(0f, AttackSlowTimer - Time.deltaTime);
+        _stunTimer = Mathf.Max(0f, _stunTimer - Time.deltaTime);
+        _moveSlowTimer = Mathf.Max(0f, _moveSlowTimer - Time.deltaTime);
+        _attackSlowTimer = Mathf.Max(0f, _attackSlowTimer - Time.deltaTime);
 
         // 임시 버프 키
-        if (Input.GetKeyDown(HealKey))
+        if (Input.GetKeyDown(_healKey))
         {
-            UpgradeHeal(HealAmount);
+            UpgradeHeal(_healAmount);
         }
 
         // 임시 대미지 키
-        if (Input.GetKeyDown(DamageKey))
+        if (Input.GetKeyDown(_damageKey))
         {
-            TakeDamage(TestDamage);
+            TakeDamage(_testDamage);
         }
 
         // if (HitStunTimer > 0f)
@@ -91,17 +92,17 @@ public class Player : MonoBehaviour
 
         // IsHitStun = HitStunTimer > 0f;
 
-        HpText = $"HP {CurrentHp:0.#} / {MaxHp:0.#}";
+        _hpText = $"HP {_currentHp:0.#} / {_stat.MaxHp:0.#}";
     }
 
     public void TakeDamage(float damage)
     {
-        if (IsDead)
+        if (_isDead)
         {
             return;
         }
 
-        float defense = DefensePercent;
+        float defense = _stat.DefensePercent;
         float rawDamage = damage;
 
         if (defense > 100f)
@@ -115,13 +116,13 @@ public class Player : MonoBehaviour
         {
             damage = 0f;
         }
-        CurrentHp -= damage;
-        DebugStats.Log($"Player hit {rawDamage:0.#} -> def {defense:0.#}% -> {damage:0.#} (HP {Mathf.Max(0f, CurrentHp):0.#})");
-        if (CurrentHp <= 0f)
+        _currentHp -= damage;
+        DebugStats.Log($"Player hit {rawDamage:0.#} -> def {defense:0.#}% -> {damage:0.#} (HP {Mathf.Max(0f, _currentHp):0.#})");
+        if (_currentHp <= 0f)
         {
-            CurrentHp = 0f;
-            IsDead = true;
-            HpText = $"HP 0 / {MaxHp:0.#}";
+            _currentHp = 0f;
+            _isDead = true;
+            _hpText = $"HP 0 / {_stat.MaxHp:0.#}";
             DebugStats.Log("Player dead");
         }
 
@@ -130,43 +131,43 @@ public class Player : MonoBehaviour
 
     public void UpgradeMaxHp(float amount)
     {
-        if (IsDead)
+        if (_isDead)
         {
             return;
         }
 
-        MaxHp += amount;
-        CurrentHp += amount;
+        _stat.UpgradeMaxHp(amount);
+        _currentHp += amount;
     }
 
     public void UpgradeDefense(float amount)
     {
-        if (IsDead)
+        if (_isDead)
         {
             return;
         }
 
-        DefensePercent += amount;
+        _stat.UpgradeDefense(amount);
     }
 
     public void UpgradeHeal(float amount)
     {
-        if (IsDead)
+        if (_isDead)
         {
             return;
         }
 
-        CurrentHp += amount;
-        if (CurrentHp > MaxHp)
+        _currentHp += amount;
+        if (_currentHp > _stat.MaxHp)
         {
-            CurrentHp = MaxHp;
+            _currentHp = _stat.MaxHp;
         }
     }
 
     // 몬스터가 거는 디버프. 같은 종류는 더 긴 지속 시간으로 갱신한다.
     public void ApplyDebuff(PlayerDebuff debuff, float duration)
     {
-        if (IsDead)
+        if (_isDead)
         {
             return;
         }
@@ -174,13 +175,13 @@ public class Player : MonoBehaviour
         switch (debuff)
         {
             case PlayerDebuff.MoveSlow:
-                MoveSlowTimer = Mathf.Max(MoveSlowTimer, duration);
+                _moveSlowTimer = Mathf.Max(_moveSlowTimer, duration);
                 break;
             case PlayerDebuff.AttackSlow:
-                AttackSlowTimer = Mathf.Max(AttackSlowTimer, duration);
+                _attackSlowTimer = Mathf.Max(_attackSlowTimer, duration);
                 break;
             case PlayerDebuff.Stun:
-                StunTimer = Mathf.Max(StunTimer, duration);
+                _stunTimer = Mathf.Max(_stunTimer, duration);
                 break;
         }
 
@@ -190,14 +191,13 @@ public class Player : MonoBehaviour
     // 새 런 시작: 강화/체력/디버프/위치 초기화
     public void ResetForNewRun()
     {
-        MaxHp = initialMaxHp;
-        DefensePercent = initialDefense;
-        CurrentHp = MaxHp;
-        IsDead = false;
-        StunTimer = 0f;
-        MoveSlowTimer = 0f;
-        AttackSlowTimer = 0f;
-        HpText = $"HP {CurrentHp:0.#} / {MaxHp:0.#}";
+        _stat.ResetHpBonus();
+        _currentHp = _stat.MaxHp;
+        _isDead = false;
+        _stunTimer = 0f;
+        _moveSlowTimer = 0f;
+        _attackSlowTimer = 0f;
+        _hpText = $"HP {_currentHp:0.#} / {_stat.MaxHp:0.#}";
 
         // CharacterController가 켜져 있으면 transform.position 대입이 무시된다.
         CharacterController controller = GetComponent<CharacterController>();
@@ -206,7 +206,7 @@ public class Player : MonoBehaviour
             controller.enabled = false;
         }
 
-        transform.position = startPosition;
+        transform.position = _startPosition;
 
         if (controller != null)
         {
@@ -214,9 +214,9 @@ public class Player : MonoBehaviour
         }
     }
 
-    public void OnGUI()
+    private void OnGUI()
     {
-        float hpRatio = CurrentHp / MaxHp;
+        float hpRatio = _currentHp / _stat.MaxHp;
         GUI.color = Color.black;
         GUI.DrawTexture(new Rect(20f, 20f, 300f, 30f), Texture2D.whiteTexture);
         GUI.color = Color.Lerp(Color.red, Color.green, hpRatio);
@@ -242,11 +242,11 @@ public class Player : MonoBehaviour
                 }
 
                 Rect outlineRect = new(hpTextRect.x + x * outline, hpTextRect.y + y * outline, hpTextRect.width, hpTextRect.height);
-                GUI.Label(outlineRect, HpText, hpTextStyle);
+                GUI.Label(outlineRect, _hpText, hpTextStyle);
             }
         }
 
         hpTextStyle.normal.textColor = Color.white;
-        GUI.Label(hpTextRect, HpText, hpTextStyle);
+        GUI.Label(hpTextRect, _hpText, hpTextStyle);
     }
 }

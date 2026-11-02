@@ -2,12 +2,22 @@ using UnityEngine;
 
 public class PlayerBullet : MonoBehaviour
 {
-    public float MoveSpeed = 0f;
-    public Vector3 Direction = Vector3.zero;
-    public float LifeTime = 0f;
+    private float _moveSpeed = 0f;
+    private Vector3 _direction = Vector3.zero;
+    private float _lifeTime = 0f;
 
-    public float Damage = 0f;
-    public int RemainPierce = 0;
+    private float _damage = 0f;
+    private int _remainPierce = 0;
+
+    // 발사하는 쪽이 생성 직후 한 번 호출해서 값을 넣는다.
+    public void Init(float moveSpeed, Vector3 direction, float lifeTime, float damage, int remainPierce)
+    {
+        _moveSpeed = moveSpeed;
+        _direction = direction;
+        _lifeTime = lifeTime;
+        _damage = damage;
+        _remainPierce = remainPierce;
+    }
 
     private void Awake()
     {
@@ -25,30 +35,30 @@ public class PlayerBullet : MonoBehaviour
         DebugStats.OnDestroyed(StatKind.Bullet);
     }
 
-    public void FixedUpdate()
+    private void FixedUpdate()
     {
-        transform.Translate(Direction * MoveSpeed * Time.deltaTime);
+        transform.Translate(_direction * _moveSpeed * Time.deltaTime);
     }
 
     // 수명이 다하면 제거한다. (맞추지 못한 투사체가 영원히 남지 않도록)
-    public void Update()
+    private void Update()
     {
-        LifeTime -= Time.deltaTime;
-        if (LifeTime <= 0f)
+        _lifeTime -= Time.deltaTime;
+        if (_lifeTime <= 0f)
         {
             Destroy(gameObject);
         }
     }
 
-    public void OnTriggerEnter(Collider collider)
+    private void OnTriggerEnter(Collider collider)
     {
         if (collider.TryGetComponent(out NormalMonster normalMonster))
         {
-            normalMonster.health -= Damage;
-            RemainPierce--;
+            normalMonster.TakeDamage(_damage);
+            _remainPierce--;
         }
 
-        if (RemainPierce <= 0)
+        if (_remainPierce <= 0)
         {
             Destroy(gameObject);
             return;
@@ -56,11 +66,11 @@ public class PlayerBullet : MonoBehaviour
 
         if (collider.TryGetComponent(out DashMonster dashMonster))
         {
-            dashMonster.health -= Damage;
-            RemainPierce--;
+            dashMonster.TakeDamage(_damage);
+            _remainPierce--;
         }
 
-        if (RemainPierce <= 0)
+        if (_remainPierce <= 0)
         {
             Destroy(gameObject);
             return;
@@ -68,11 +78,11 @@ public class PlayerBullet : MonoBehaviour
 
         if (collider.TryGetComponent(out DebuffMonster debuffMonster))
         {
-            debuffMonster.health -= Damage;
-            RemainPierce--;
+            debuffMonster.TakeDamage(_damage);
+            _remainPierce--;
         }
 
-        if (RemainPierce <= 0)
+        if (_remainPierce <= 0)
         {
             Destroy(gameObject);
             return;

@@ -1,42 +1,32 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Serialization;
 
+[RequireComponent(typeof(PlayerStat))]
 public class PlayerMove : MonoBehaviour
 {
-    private float DodgeTime = 0.5f;
-
-    [Header("Stat")]
-    public float MoveSpeed = 5f;
-
-    public float DodgeSpeed = 30f;
-    public float JumpSpeed = 10f; // 음 이거 왜있음? 
-    public float CurrentSpeed = 0f;
-    public bool IsDodge = false;
-    public float MoveSpeedBonusRate = 0f; // 증강으로 늘어난 이동 속도 비율
-
     [Header("Components")]
-    public CharacterController Controller;
+    [SerializeField] private Transform _cameraTransform;
 
-    public Transform CameraTransform;
+    private float _currentSpeed = 0f;
+    private bool _isDodge = false;
 
-    private Player player;
-    private float baseMoveSpeed;
+    private CharacterController _controller;
+    private Player _player;
+    private PlayerStat _stat;
 
     private void Awake()
     {
-        Controller = GetComponent<CharacterController>();
-        player = GetComponent<Player>();
+        _controller = GetComponent<CharacterController>();
+        _player = GetComponent<Player>();
+        _stat = GetComponent<PlayerStat>();
 
-        baseMoveSpeed = MoveSpeed;
-        CurrentSpeed = MoveSpeed;
+        _currentSpeed = _stat.MoveSpeed;
     }
-
 
     private void Update()
     {
         // 기절 중에는 이동/회피 불가
-        if (player != null && player.IsStunned)
+        if (_player != null && _player.IsStunned)
         {
             return;
         }
@@ -49,7 +39,7 @@ public class PlayerMove : MonoBehaviour
         Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
 
         // 카메라좌우 기준만 이동 방향으로 
-        direction = Quaternion.Euler(0f, CameraTransform.eulerAngles.y, 0f) * direction;
+        direction = Quaternion.Euler(0f, _cameraTransform.eulerAngles.y, 0f) * direction;
 
         if (Input.GetButtonDown("Dodge"))
         {
@@ -57,39 +47,50 @@ public class PlayerMove : MonoBehaviour
             StartCoroutine(Dodge());
         }
 
-        float slowRate = player != null && player.IsMoveSlowed ? player.MoveSlowRate : 1f;
-        Vector3 velocity = direction * CurrentSpeed * slowRate * Time.deltaTime;
-        Controller.Move(velocity);
+        float slowRate = _player != null && _player.IsMoveSlowed ? _stat.MoveSlowRate : 1f;
+        Vector3 velocity = direction * _currentSpeed * slowRate * Time.deltaTime;
+        _controller.Move(velocity);
+    }
+
+    public Transform GetCameraTransform()
+    {
+        if (_cameraTransform != null)
+        {
+            return _cameraTransform;
+        }
+        else
+        {
+            Debug.Log("CameraTrasform is null");
+            return null;
+        }
     }
 
     // 증강: 이동 속도 +rate (기본값 대비 누적)
     public void UpgradeMoveSpeed(float rate)
     {
-        MoveSpeedBonusRate += rate;
-        MoveSpeed = baseMoveSpeed * (1f + MoveSpeedBonusRate);
-        if (!IsDodge)
+        _stat.UpgradeMoveSpeed(rate);
+        if (!_isDodge)
         {
-            CurrentSpeed = MoveSpeed;
+            _currentSpeed = _stat.MoveSpeed;
         }
     }
 
     public void ResetStats()
     {
         StopAllCoroutines();
-        IsDodge = false;
-        MoveSpeedBonusRate = 0f;
-        MoveSpeed = baseMoveSpeed;
-        CurrentSpeed = MoveSpeed;
+        _isDodge = false;
+        _stat.ResetMoveBonus();
+        _currentSpeed = _stat.MoveSpeed;
     }
 
     private IEnumerator Dodge()
     {
-        IsDodge = true;
-        CurrentSpeed = DodgeSpeed;
+        _isDodge = true;
+        _currentSpeed = _stat.DodgeSpeed;
 
-        yield return new WaitForSeconds(DodgeTime);
+        yield return new WaitForSeconds(_stat.DodgeTime);
 
-        IsDodge = false;
-        CurrentSpeed = MoveSpeed;
+        _isDodge = false;
+        _currentSpeed = _stat.MoveSpeed;
     }
 }
