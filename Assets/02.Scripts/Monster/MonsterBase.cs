@@ -8,17 +8,18 @@ using UnityEngine.UI;
 /// </summary>
 public abstract class MonsterBase : MonoBehaviour
 {
-    [SerializeField] protected float _moveSpeed = 1.5f;
-    [SerializeField] protected float _maxHealth = 100f;
+    // 자식 클래스에서 사용하는 필드
     [SerializeField] protected float _attackDamage = 20f;
-    [SerializeField] protected float _attackInterval = 0.5f;
-    [SerializeField] protected GameObject _expPrefab;
-
-    protected float _health;
-    protected Transform _target;
     protected Vector3 _direction;
-    protected Slider _healthBar;
 
+    [SerializeField] private float _moveSpeed = 1.5f;
+    [SerializeField] private float _maxHealth = 100f;
+    [SerializeField] private float _attackInterval = 0.5f;
+    [SerializeField] private GameObject _expPrefab;
+
+    private float _health;
+    private Transform _target;
+    private Slider _healthBar;
     private float _lastAttackTime = float.NegativeInfinity;
 
     protected virtual void Awake()

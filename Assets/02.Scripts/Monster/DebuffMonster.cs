@@ -12,7 +12,14 @@ public class DebuffMonster : MonsterBase
     // 쿨타임마다 디버프 시전, 시전 중이 아니면 플레이어 방향으로 이동
     protected override void Move()
     {
-        transform.forward = _direction.normalized;
+        // 수평 방향으로만 플레이어를 바라보도록 (y 성분 제거)
+        Vector3 lookDirection = _direction;
+        lookDirection.y = 0f;
+
+        if (lookDirection.sqrMagnitude > 0.0001f)
+        {
+            transform.forward = lookDirection.normalized;
+        }
 
         if (_elapsed >= _castCoolTime)
         {
