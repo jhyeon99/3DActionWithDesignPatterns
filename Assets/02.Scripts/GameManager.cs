@@ -62,7 +62,6 @@ public class GameManager : MonoBehaviour
     public List<UpgradeType> UpgradeChoices = new();
 
     public float SpawnInterval = 5f;
-    public float MonsterSpawnTimer = 0f;
     public int PendingUpgradeCount = 0;
 
     public static GameManager Instance { get; private set; }
@@ -75,6 +74,9 @@ public class GameManager : MonoBehaviour
     private IPlayerStatus playerStatus;
     private IUpgradeApplier upgradeApplier;
     private IScoreService scoreService;
+
+    // 웨이브 타이머와 소환 수 계산은 WaveDirector가 맡고, 몬스터를 만드는 일은 GameManager가 한다.
+    private readonly WaveDirector waveDirector = new WaveDirector();
 
     private void Awake()
     {
@@ -190,8 +192,7 @@ public class GameManager : MonoBehaviour
         // 조건 || 몬스터의 수가 0일 때 추가
         if (IsGameStarted && IsGaming)
         {
-            MonsterSpawnTimer += Time.deltaTime;
-            if (MonsterSpawnTimer >= SpawnInterval)
+            if (waveDirector.Tick(Time.deltaTime, SpawnInterval))
             {
                 MonsterWaveStart();
             }
@@ -211,7 +212,7 @@ public class GameManager : MonoBehaviour
         PendingUpgradeCount = 0;
         scoreService.Reset();
         Time.timeScale = 1;
-        MonsterSpawnTimer = SpawnInterval;
+        waveDirector.StartNow(SpawnInterval);
 
         // 증강 패널 초기화
         UpgradeChoices.Clear();
@@ -335,13 +336,12 @@ public class GameManager : MonoBehaviour
 
     public void MonsterWaveStart()
     {
-        // 주기적으로 스폰하는 몬스터 5마리씩 증가
-        int increaseCount = Mathf.FloorToInt(CurrentTime / Mathf.Max(1f, SpawnIncreaseInterval)) * 5;
-        SpawnCount = InitialSpawnCount + increaseCount;
+        // 시간이 지날수록 소환 수가 늘어난다. (계산은 WaveDirector)
+        SpawnCount = waveDirector.GetSpawnCount(CurrentTime, InitialSpawnCount, SpawnIncreaseInterval);
         if (!IsGameStarted || !IsGaming)
             return;
 
-        MonsterSpawnTimer = 0f;
+        waveDirector.ResetTimer();
 
         if (MonsterPrefabs == null || MonsterPrefabs.Length == 0 || SpawnPoints == null || SpawnPoints.Length == 0)
             return;
