@@ -19,7 +19,7 @@ public abstract class MonsterBase : MonoBehaviour
     protected Vector3 _direction;
     protected Slider _healthBar;
 
-    private float _attackElapsed = 0f;
+    private float _lastAttackTime = float.NegativeInfinity;
 
     protected virtual void Awake()
     {
@@ -49,15 +49,13 @@ public abstract class MonsterBase : MonoBehaviour
 
     private void OnCollisionStay(Collision collision)
     {
-        _attackElapsed += Time.deltaTime;
-
         if (!collision.gameObject.CompareTag("Player")) return;
-        if (_attackElapsed < _attackInterval) return;
+        if (Time.time - _lastAttackTime < _attackInterval) return;
 
         if (collision.gameObject.TryGetComponent(out Player player))
         {
             Attack(player);
-            _attackElapsed = 0f;
+            _lastAttackTime = Time.time;
         }
     }
 
