@@ -77,11 +77,18 @@ public abstract class MonsterBase : MonoBehaviour
 
     private void Die()
     {
-        int random = Random.Range(1, 5);
-
-        for (int i = 0; i < random; i++)
+        if (_expPrefab != null)
         {
-            Instantiate(_expPrefab, transform.position, transform.rotation);
+            int random = Random.Range(1, 5);
+
+            for (int i = 0; i < random; i++)
+            {
+                Instantiate(_expPrefab, transform.position, transform.rotation);
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"{name}: Exp 프리팹이 연결되지 않았습니다.");
         }
 
         Destroy(gameObject);

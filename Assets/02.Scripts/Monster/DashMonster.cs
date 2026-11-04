@@ -43,9 +43,14 @@ public class DashMonster : MonsterBase
 
         yield return new WaitForSeconds(2f);
 
-        // 돌진 거리만큼 이동하면 종료하도록
-        while (Vector3.Distance(transform.position, endPosition) > 0.2f)
+        // 막혀서 도착하지 못해도 돌진이 끝나도록 최대 돌진 시간 제한 (여유 1.5배)
+        float maxDashTime = distance / _dashSpeed * 1.5f;
+        float dashElapsed = 0f;
+
+        // 돌진 거리만큼 이동하거나 최대 돌진 시간이 지나면 종료하도록
+        while (Vector3.Distance(transform.position, endPosition) > 0.2f && dashElapsed < maxDashTime)
         {
+            dashElapsed += Time.deltaTime;
             transform.position = Vector3.MoveTowards(
                 transform.position,
                 endPosition,
