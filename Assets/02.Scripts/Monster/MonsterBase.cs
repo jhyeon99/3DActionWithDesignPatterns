@@ -31,10 +31,13 @@ public abstract class MonsterBase : MonoBehaviour
         _healthBar.value = _health / _maxHealth;
     }
 
+    private void Start()
+    {
+        FindTarget();
+    }
+
     private void Update()
     {
-        _target = GameObject.FindGameObjectWithTag("Player").transform;
-
         if (_health <= 0)
         {
             Die();
@@ -42,6 +45,12 @@ public abstract class MonsterBase : MonoBehaviour
         }
 
         UpdateHealthBar();
+
+        // 플레이어가 없으면 이동하지 않도록
+        if (_target == null && !FindTarget())
+        {
+            return;
+        }
 
         _direction = _target.position - transform.position;
         Move();
@@ -67,6 +76,14 @@ public abstract class MonsterBase : MonoBehaviour
     public void TakeDamage(float damage)
     {
         _health -= damage;
+    }
+
+    // Player 태그 오브젝트를 찾아 캐싱, 찾으면 true
+    private bool FindTarget()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        _target = player != null ? player.transform : null;
+        return _target != null;
     }
 
     private void UpdateHealthBar()
