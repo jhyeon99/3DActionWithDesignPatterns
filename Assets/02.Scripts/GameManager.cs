@@ -19,8 +19,8 @@ public class GameManager : MonoBehaviour
     public int Level = 1; // 레벨
     public float Experience = 0f; // 경험치
     public float MaxExperience = 100f; // 레벨업 경험치
-    public float Score = 0f; // 점수
-    public int KillCount = 0; // 처치 수
+    public float Score => scoreService.Score; // 점수 (ScoreService가 관리)
+    public int KillCount => scoreService.KillCount; // 처치 수 (ScoreService가 관리)
     [Header("게임 시작 플래그")]
     public bool IsGameStarted = false;
     [Header("게임 진행 중 플래그")]
@@ -74,6 +74,7 @@ public class GameManager : MonoBehaviour
     // GameManager는 Player 같은 구체 클래스가 아니라 계약(인터페이스)으로만 접근한다.
     private IPlayerStatus playerStatus;
     private IUpgradeApplier upgradeApplier;
+    private IScoreService scoreService;
 
     private void Awake()
     {
@@ -84,6 +85,7 @@ public class GameManager : MonoBehaviour
         EventBus = ServiceLocator.Get<IGameEventBus>();
         playerStatus = ServiceLocator.Get<IPlayerStatus>();
         upgradeApplier = ServiceLocator.Get<IUpgradeApplier>();
+        scoreService = ServiceLocator.Get<IScoreService>();
 
         DontDestroyOnLoad(gameObject);
     }
@@ -93,12 +95,20 @@ public class GameManager : MonoBehaviour
     {
         EventBus.Subscribe<EnemyKilledEvent>(HandleEnemyKilled);
         EventBus.Subscribe<ExpCollectedEvent>(HandleExpCollected);
+        EventBus.Subscribe<ScoreChangedEvent>(HandleScoreChanged);
     }
 
     private void OnDisable()
     {
         EventBus.Unsubscribe<EnemyKilledEvent>(HandleEnemyKilled);
         EventBus.Unsubscribe<ExpCollectedEvent>(HandleExpCollected);
+        EventBus.Unsubscribe<ScoreChangedEvent>(HandleScoreChanged);
+    }
+
+    // 점수가 바뀌면 화면의 점수 글자를 갱신한다. (점수를 올리는 쪽은 화면을 모른다)
+    private void HandleScoreChanged(ScoreChangedEvent gameEvent)
+    {
+        ScoreText.text = gameEvent.Score.ToString("0");
     }
 
     // 적이 죽으면 점수와 처치 수를 올린다.
@@ -199,8 +209,7 @@ public class GameManager : MonoBehaviour
         Experience = 0f;
         MaxExperience = 100f;
         PendingUpgradeCount = 0;
-        Score = 0f;
-        KillCount = 0;
+        scoreService.Reset();
         Time.timeScale = 1;
         MonsterSpawnTimer = SpawnInterval;
 
@@ -260,17 +269,14 @@ public class GameManager : MonoBehaviour
     // 몬스터 처치 시 몬스터가 호출한다. (점수 + 처치 수)
     public void OnMonsterKilled(string monsterName, float scoreValue)
     {
-        KillCount++;
-        ScoreUp(scoreValue);
+        scoreService.AddKill(scoreValue);
         DebugStats.Log($"{monsterName} killed +{scoreValue:0} score");
     }
 
     // 적 처치 시 사용
     public void ScoreUp(float value)
     {
-        Score += value;
-        ScoreText.text = Score.ToString("0");
-        EventBus.Publish(new ScoreChangedEvent(Score));
+        scoreService.Add(value);
     }
 
     // 적 처치 시 사용
@@ -305,9 +311,7 @@ public class GameManager : MonoBehaviour
 
     public void ScoreDown(float value)
     {
-        Score = Mathf.Max(0, Score - value);
-        ScoreText.text = Score.ToString("0");
-        EventBus.Publish(new ScoreChangedEvent(Score));
+        scoreService.Subtract(value);
     }
 
     public void GamePause()

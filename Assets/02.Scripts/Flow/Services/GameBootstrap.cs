@@ -30,6 +30,12 @@ public class GameBootstrap : MonoBehaviour
             ServiceLocator.Register<IGameEventBus>(new GameEventBus());
         }
 
+        if (!ServiceLocator.TryGet(out IScoreService _))
+        {
+            // 점수 서비스는 이벤트 버스로 점수 변화를 알리므로, 버스가 먼저 등록되어 있어야 한다.
+            ServiceLocator.Register<IScoreService>(new ScoreService(ServiceLocator.Get<IGameEventBus>()));
+        }
+
         if (!ServiceLocator.TryGet(out IPlayerStatus _))
         {
             ServiceLocator.Register<IPlayerStatus>(new LegacyPlayerStatus());
