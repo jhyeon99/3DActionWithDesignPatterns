@@ -16,9 +16,9 @@ public class GameManager : MonoBehaviour
     /// </summary>
     [Header("Game Settings")]
     public float CurrentTime = 0f; // 진행 시간
-    public int Level = 1; // 레벨
-    public float Experience = 0f; // 경험치
-    public float MaxExperience = 100f; // 레벨업 경험치
+    public int Level => experienceService.Level; // 레벨 (ExperienceService가 관리)
+    public float Experience => experienceService.Experience; // 경험치 (ExperienceService가 관리)
+    public float MaxExperience => experienceService.MaxExperience; // 레벨업 경험치 (ExperienceService가 관리)
     public float Score => scoreService.Score; // 점수 (ScoreService가 관리)
     public int KillCount => scoreService.KillCount; // 처치 수 (ScoreService가 관리)
     [Header("게임 시작 플래그")]
@@ -74,6 +74,7 @@ public class GameManager : MonoBehaviour
     private IPlayerStatus playerStatus;
     private IUpgradeApplier upgradeApplier;
     private IScoreService scoreService;
+    private IExperienceService experienceService;
 
     // 웨이브 타이머와 소환 수 계산은 WaveDirector가 맡고, 몬스터를 만드는 일은 GameManager가 한다.
     private readonly WaveDirector waveDirector = new WaveDirector();
@@ -88,6 +89,7 @@ public class GameManager : MonoBehaviour
         playerStatus = ServiceLocator.Get<IPlayerStatus>();
         upgradeApplier = ServiceLocator.Get<IUpgradeApplier>();
         scoreService = ServiceLocator.Get<IScoreService>();
+        experienceService = ServiceLocator.Get<IExperienceService>();
 
         DontDestroyOnLoad(gameObject);
     }
@@ -98,6 +100,8 @@ public class GameManager : MonoBehaviour
         EventBus.Subscribe<EnemyKilledEvent>(HandleEnemyKilled);
         EventBus.Subscribe<ExpCollectedEvent>(HandleExpCollected);
         EventBus.Subscribe<ScoreChangedEvent>(HandleScoreChanged);
+        EventBus.Subscribe<ExperienceChangedEvent>(HandleExperienceChanged);
+        EventBus.Subscribe<LevelUpEvent>(HandleLevelUp);
     }
 
     private void OnDisable()
@@ -105,6 +109,27 @@ public class GameManager : MonoBehaviour
         EventBus.Unsubscribe<EnemyKilledEvent>(HandleEnemyKilled);
         EventBus.Unsubscribe<ExpCollectedEvent>(HandleExpCollected);
         EventBus.Unsubscribe<ScoreChangedEvent>(HandleScoreChanged);
+        EventBus.Unsubscribe<ExperienceChangedEvent>(HandleExperienceChanged);
+        EventBus.Unsubscribe<LevelUpEvent>(HandleLevelUp);
+    }
+
+    // 경험치가 바뀌면 경험치 바와 글자를 갱신한다.
+    private void HandleExperienceChanged(ExperienceChangedEvent gameEvent)
+    {
+        ExperienceSlider.maxValue = gameEvent.MaxExperience;
+        ExperienceSlider.value = gameEvent.Experience;
+        ExperienceText.text = $"{gameEvent.Experience:0} / {gameEvent.MaxExperience:0}";
+    }
+
+    // 레벨이 오르면 레벨 글자를 갱신하고, 증강 선택 창을 연다.
+    private void HandleLevelUp(LevelUpEvent gameEvent)
+    {
+        PendingUpgradeCount++;
+        LevelText.text = gameEvent.Level.ToString("0");
+        if (!UpgradePanel.activeSelf && IsGaming)
+        {
+            OpenUpgradeSelection();
+        }
     }
 
     // 점수가 바뀌면 화면의 점수 글자를 갱신한다. (점수를 올리는 쪽은 화면을 모른다)
@@ -206,9 +231,7 @@ public class GameManager : MonoBehaviour
         IsGameStarted = true;
         IsGaming = true;
         CurrentTime = 0f;
-        Level = 1;
-        Experience = 0f;
-        MaxExperience = 100f;
+        experienceService.Reset();
         PendingUpgradeCount = 0;
         scoreService.Reset();
         Time.timeScale = 1;
@@ -283,31 +306,12 @@ public class GameManager : MonoBehaviour
     // 적 처치 시 사용
     public void ExperienceUp(float value)
     {
-        Experience += value;
-        if (MaxExperience <= 0) return;
-        while (Experience >= MaxExperience)
-        {
-            Experience -= MaxExperience;
-            LevelUp();
-        }
-
-        ExperienceSlider.value = Experience;
-        ExperienceText.text = $"{Experience:0} / {MaxExperience:0}";
+        experienceService.Add(value);
     }
 
     public void LevelUp()
     {
-        Level++;
-        PendingUpgradeCount++;
-        MaxExperience *= 1.1f;
-        ExperienceSlider.maxValue = MaxExperience;
-        ExperienceText.text = $"{Experience:0} / {MaxExperience:0}";
-        LevelText.text = Level.ToString("0");
-        EventBus.Publish(new LevelUpEvent(Level));
-        if (!UpgradePanel.activeSelf && IsGaming)
-        {
-            OpenUpgradeSelection();
-        }
+        experienceService.LevelUp();
     }
 
     public void ScoreDown(float value)

@@ -36,6 +36,11 @@ public class GameBootstrap : MonoBehaviour
             ServiceLocator.Register<IScoreService>(new ScoreService(ServiceLocator.Get<IGameEventBus>()));
         }
 
+        if (!ServiceLocator.TryGet(out IExperienceService _))
+        {
+            ServiceLocator.Register<IExperienceService>(new ExperienceService(ServiceLocator.Get<IGameEventBus>()));
+        }
+
         if (!ServiceLocator.TryGet(out IPlayerStatus _))
         {
             ServiceLocator.Register<IPlayerStatus>(new LegacyPlayerStatus());

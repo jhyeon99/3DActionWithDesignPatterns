@@ -64,7 +64,7 @@ public readonly struct ExpCollectedEvent
     }
 }
 
-// 발행: 송재현(Flow). 경험치가 차서 레벨이 오를 때.
+// 발행: 송재현(ExperienceService). 경험치가 차서 레벨이 오를 때.
 public readonly struct LevelUpEvent
 {
     public readonly int Level;
@@ -72,6 +72,19 @@ public readonly struct LevelUpEvent
     public LevelUpEvent(int level)
     {
         Level = level;
+    }
+}
+
+// 발행: 송재현(ExperienceService). 경험치나 레벨업에 필요한 경험치가 바뀔 때.
+public readonly struct ExperienceChangedEvent
+{
+    public readonly float Experience;
+    public readonly float MaxExperience;
+
+    public ExperienceChangedEvent(float experience, float maxExperience)
+    {
+        Experience = experience;
+        MaxExperience = maxExperience;
     }
 }
 
